@@ -351,7 +351,7 @@ func (t *Tgbot) clientResults(search string, isAdmin bool, inboundID string) []t
 		if inboundID != "" && strconv.Itoa(ib.Id) != inboundID {
 			continue
 		}
-		clients, err := t.inboundService.GetClients(ib)
+		clients, err := t.inboundClients(ib) // LUCX-HOOK: clients tables, not settings.clients (tgbot_lucx_vk.go)
 		if err != nil {
 			continue
 		}
@@ -540,7 +540,7 @@ func (t *Tgbot) clientCount() int {
 	}
 	seen := map[string]bool{}
 	for _, ib := range inbounds {
-		clients, err := t.inboundService.GetClients(ib)
+		clients, err := t.inboundClients(ib) // LUCX-HOOK: clients tables, not settings.clients (tgbot_lucx_vk.go)
 		if err != nil {
 			continue
 		}
@@ -565,7 +565,10 @@ func (t *Tgbot) inboundSummaryText(inbound *model.Inbound) string {
 		body += t.I18nBot("tgbot.messages.expire",
 			"Time=="+time.Unix(inbound.ExpiryTime/1000, 0).Format("2006-01-02 15:04:05"))
 	}
-	body += t.I18nBot("tgbot.messages.clientsCount", "Count=="+strconv.Itoa(len(inbound.ClientStats)))
+	// LUCX-HOOK: count from the clients tables; GetInbound never loads ClientStats
+	clients, _ := t.inboundClients(inbound)
+	body += t.I18nBot("tgbot.messages.clientsCount", "Count=="+strconv.Itoa(len(clients)))
+	// END LUCX-HOOK
 	return body
 }
 

@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
@@ -157,4 +158,14 @@ func (t *Tgbot) handleClientVkInput(message *telego.Message, actor chatUser, sta
 	userStateMgr.clear(actor)
 	t.searchClientScreen(message.Chat.ID, email)
 	return true
+}
+
+// inboundClients keeps the inbound row's settings.clients as the source and falls
+// back to the clients tables when it is empty: wdtt/CSQTT keep no clients there.
+func (t *Tgbot) inboundClients(inbound *model.Inbound) ([]model.Client, error) {
+	clients, err := t.inboundService.GetClients(inbound)
+	if err != nil || len(clients) > 0 {
+		return clients, err
+	}
+	return t.inboundService.ListClientsForInbound(inbound.Id)
 }

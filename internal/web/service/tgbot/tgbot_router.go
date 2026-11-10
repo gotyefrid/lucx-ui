@@ -41,7 +41,7 @@ func (t *Tgbot) chooseInboundClient(callbackQuery *telego.CallbackQuery, chatId 
 		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.getInboundsFailed"))
 		return
 	}
-	clients, err := t.inboundService.GetClients(inbound)
+	clients, err := t.inboundClients(inbound) // LUCX-HOOK: clients tables, not settings.clients (tgbot_lucx_vk.go)
 	if err != nil || len(clients) == 0 {
 		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.getClientsFailed"))
 		return

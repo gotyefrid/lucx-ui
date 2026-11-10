@@ -15,6 +15,8 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
+
+	"github.com/mymmrac/telego"
 )
 
 func seedVkInbound(t *testing.T, protocol model.Protocol, port int, settings string) int {
@@ -143,5 +145,38 @@ func TestClientCardEditsVkHashesOfTunnelClient(t *testing.T) {
 	}
 	if err := tb.saveClientVkHashes("ios-card", "-"); err != nil || service.ClientVkHashes("ios-card") != "" {
 		t.Fatalf("'-' did not clear: %q, %v", service.ClientVkHashes("ios-card"), err)
+	}
+}
+
+// Reproduces the bot report: wdtt/CSQTT clients live only in the clients table,
+// so a search over settings.clients missed them and the inbound card said 0.
+func TestBotListsShareOnlyClients(t *testing.T) {
+	localizeWithRealBundle(t)
+	tb, _ := newScreenTgbot(t, false)
+	initReportDB(t)
+	for port, proto := range map[int]model.Protocol{56010: model.Qwdtt, 46010: model.Csqtt} {
+		ib := seedVkInbound(t, proto, port, `{}`)
+		email := "share-" + string(proto)
+		draft := &clientDraft{email: email, subID: "sub" + email + "00000000", enable: true, receiverInboundIDs: []int{ib}}
+		if _, err := tb.SubmitAddClient(draft); err != nil {
+			t.Fatalf("create %s client: %v", proto, err)
+		}
+		results := tb.clientResults("", true, "")
+		found := false
+		for _, r := range results {
+			if article, ok := r.(*telego.InlineQueryResultArticle); ok && article.Title == email {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("inline search misses the %s client %s", proto, email)
+		}
+		inbound, err := tb.inboundService.GetInbound(ib)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if summary := tb.inboundSummaryText(inbound); !strings.Contains(summary, "Clients: 1") {
+			t.Errorf("%s inbound card does not count its client: %q", proto, summary)
+		}
 	}
 }

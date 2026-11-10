@@ -98,7 +98,7 @@ func (t *Tgbot) getInboundsAttachPicker(draft *clientDraft) (*telego.InlineKeybo
 // getInboundClientsFor builds the client list for the caller's inbound row: a
 // second DB read would reopen the stale-row window the caller's guard closed.
 func (t *Tgbot) getInboundClientsFor(inbound *model.Inbound, action string) (*telego.InlineKeyboardMarkup, error) {
-	clients, err := t.inboundService.GetClients(inbound)
+	clients, err := t.inboundClients(inbound) // LUCX-HOOK: clients tables, not settings.clients (tgbot_lucx_vk.go)
 	if err != nil || len(clients) == 0 {
 		return nil, errors.New(t.I18nBot("tgbot.answers.getClientsFailed"))
 	}

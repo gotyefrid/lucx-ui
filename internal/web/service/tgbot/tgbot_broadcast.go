@@ -544,7 +544,7 @@ func (t *Tgbot) collectBroadcastRecipients() []int64 {
 	seen := make(map[int64]bool)
 	var recipients []int64
 	for _, inbound := range inbounds {
-		clients, err := t.inboundService.GetClients(inbound)
+		clients, err := t.inboundClients(inbound) // LUCX-HOOK: clients tables, not settings.clients (tgbot_lucx_vk.go)
 		if err != nil {
 			continue
 		}
