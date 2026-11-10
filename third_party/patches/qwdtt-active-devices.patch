@@ -1,0 +1,122 @@
+diff --git a/server/active_devices_test.go b/server/active_devices_test.go
+new file mode 100644
+index 0000000..c78e5eb
+--- /dev/null
++++ b/server/active_devices_test.go
+@@ -0,0 +1,40 @@
++package main
++
++import (
++	"net"
++	"testing"
++)
++
++// Старые клиенты без device_id приходят как "unknown"; несколько паролей делят
++// эту запись, и подключение одного не должно делать онлайн остальные.
++func TestAdminActiveDevicesCountsOnlyOwnConnections(t *testing.T) {
++	shared := []string{"unknown"}
++	router := &PasswordEntry{Label: "router", DeviceIDs: shared}
++	laptop := &PasswordEntry{Label: "laptop", DeviceIDs: shared}
++
++	conn, peer := net.Pipe()
++	defer conn.Close()
++	defer peer.Close()
++
++	untrack := trackCredentialConnection("router-pass", "unknown", conn)
++	activeDevicesMu.Lock()
++	activeDevices["unknown"]++
++	activeDevicesMu.Unlock()
++	defer func() {
++		activeDevicesMu.Lock()
++		delete(activeDevices, "unknown")
++		activeDevicesMu.Unlock()
++	}()
++
++	if got := toAdminPasswordView("router-pass", router).ActiveDevices; got != 1 {
++		t.Fatalf("router active_devices = %d, want 1", got)
++	}
++	if got := toAdminPasswordView("laptop-pass", laptop).ActiveDevices; got != 0 {
++		t.Fatalf("laptop active_devices = %d, want 0 (its only device is in use by another password)", got)
++	}
++
++	untrack()
++	if got := toAdminPasswordView("router-pass", router).ActiveDevices; got != 0 {
++		t.Fatalf("router active_devices after disconnect = %d, want 0", got)
++	}
++}
+diff --git a/server/admin_api.go b/server/admin_api.go
+index 8692281..98baead 100644
+--- a/server/admin_api.go
++++ b/server/admin_api.go
+@@ -126,14 +126,7 @@ func toAdminPasswordView(pass string, entry *PasswordEntry) adminPasswordView {
+ 		maxDevs = 1
+ 	}
+ 
+-	activeDevicesMu.Lock()
+-	active := 0
+-	for _, id := range deviceIDs {
+-		if activeDevices[id] > 0 {
+-			active++
+-		}
+-	}
+-	activeDevicesMu.Unlock()
++	active := credentialActiveDevices(pass)
+ 
+ 	return adminPasswordView{
+ 		Password:      pass,
+diff --git a/server/connections.go b/server/connections.go
+index 1053e67..664738b 100644
+--- a/server/connections.go
++++ b/server/connections.go
+@@ -39,6 +39,18 @@ func trackCredentialConnection(password, deviceID string, conn net.Conn) func()
+ 	}
+ }
+ 
++// credentialActiveDevices считает устройства с живыми подключениями этого пароля.
++// Глобальный activeDevices для этого не годится: старые клиенты делят "unknown".
++func credentialActiveDevices(password string) int {
++	credentialConnections.Lock()
++	defer credentialConnections.Unlock()
++	devices := make(map[string]struct{})
++	for _, deviceID := range credentialConnections.items[wrapKeyID(password)] {
++		devices[deviceID] = struct{}{}
++	}
++	return len(devices)
++}
++
+ func disconnectCredentialConnections(password string) {
+ 	disconnectCredentialDeviceConnections(password, "")
+ }
+diff --git a/server/profile_api.go b/server/profile_api.go
+index 1ee9a78..dac4b92 100644
+--- a/server/profile_api.go
++++ b/server/profile_api.go
+@@ -192,26 +192,16 @@ func handleAPIProfileStatus(w http.ResponseWriter, r *http.Request) {
+ 
+ 	isCurrentBound := false
+ 
+-	activeCount := 0
+-	activeDevicesMu.Lock()
+ 	if len(entry.DeviceIDs) == 0 && entry.DeviceID != "" {
+-		if entry.DeviceID == deviceID {
+-			isCurrentBound = true
+-		}
+-		if count := activeDevices[entry.DeviceID]; count > 0 {
+-			activeCount = 1
+-		}
++		isCurrentBound = entry.DeviceID == deviceID
+ 	} else {
+ 		for _, id := range entry.DeviceIDs {
+ 			if id == deviceID {
+ 				isCurrentBound = true
+ 			}
+-			if count := activeDevices[id]; count > 0 {
+-				activeCount++
+-			}
+ 		}
+ 	}
+-	activeDevicesMu.Unlock()
++	activeCount := credentialActiveDevices(password)
+ 
+ 	resp := map[string]interface{}{
+ 		"max_devices":      maxDevs,

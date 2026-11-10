@@ -221,6 +221,8 @@ if ! have "qwdtt-linux-${ARCH}"; then
     git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-subnet.patch"
     # LucX: панель заводит пароль на каждого клиента (perClient) — лимит 10 мал.
     git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-password-limit.patch"
+    # LucX: онлайн пароля по его подключениям — старые клиенты делят device_id "unknown".
+    git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-active-devices.patch"
     (
         cd /tmp/qwdtt
         GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH="${ARCH}" go build -trimpath -ldflags="-s -w" -o "${DEST}/qwdtt-linux-${ARCH}" ./server
