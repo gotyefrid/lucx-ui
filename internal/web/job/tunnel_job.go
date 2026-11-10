@@ -889,7 +889,9 @@ func (j *TunnelJob) collectCsqttTraffic() {
 			// policy-route bridge; the /proc io scrape carries the same bytes.
 			routedTags[tag] = true
 		}
-		emailsByTag[tag] = anytlsEmailsForInbound(ib)
+		// Онлайн/трафик клиентов CSQTT считает CsqttMemberService по счётчикам
+		// участников; I/O процесса (в т.ч. запросы панели к его API) — только
+		// в статистику инбаунда, иначе единственный клиент «вечно онлайн».
 		snaps = append(snaps, tunnel.GetManager().CollectCsqttTraffic(tag))
 	}
 	j.commitSidecarScrape("csqtt", snaps, emailsByTag, routedTags)

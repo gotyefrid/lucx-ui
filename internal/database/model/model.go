@@ -1554,8 +1554,13 @@ type CsqttMember struct {
 	ClientEmail string `json:"clientEmail" gorm:"uniqueIndex:idx_csqtt_member_client"`
 	Password    string `json:"-"`
 	Link        string `json:"-" gorm:"type:text"`
-	CreatedAt   int64  `json:"createdAt" gorm:"autoCreateTime:milli"`
-	UpdatedAt   int64  `json:"updatedAt" gorm:"autoUpdateTime:milli"`
+	// LUCX-HOOK: последние счётчики участника на сервере CSQTT — клиенту
+	// начисляется только прирост.
+	UpBytes   int64 `json:"-" gorm:"default:0"`
+	DownBytes int64 `json:"-" gorm:"default:0"`
+	// END LUCX-HOOK
+	CreatedAt int64 `json:"createdAt" gorm:"autoCreateTime:milli"`
+	UpdatedAt int64 `json:"updatedAt" gorm:"autoUpdateTime:milli"`
 }
 
 // ClientWarpAccount is the Cloudflare WARP account registered for one

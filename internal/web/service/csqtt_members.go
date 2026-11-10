@@ -25,6 +25,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/lucx/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/common"
+	"github.com/mhsanaei/3x-ui/v3/internal/xray"
 )
 
 const csqttMemberWebPort = 46002
@@ -37,6 +38,10 @@ type csqttMemberServerClient struct {
 	VkHashes string `json:"vk_hashes"`
 	VkToken  bool   `json:"vk_token"`
 	GroupID  string `json:"group_id"`
+	// Счётчики участника с запуска CSQTT и число активных сессий.
+	Up             int64 `json:"up"`
+	Down           int64 `json:"down"`
+	ActiveSessions int   `json:"active_sessions"`
 }
 
 type csqttMemberClientRequest struct {
@@ -152,6 +157,8 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 	inboundHashes, vkToken := cfg.MemberVkHashes(), cfg.MemberVkToken()
 	var regroup []string
 	var vkErr error
+	var traffic []*xray.ClientTraffic
+	var online []string
 	linksStale := false
 	desired := make(map[string]struct{}, len(clients))
 	for _, client := range clients {
@@ -218,10 +225,40 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 		if groupID != "" && server.GroupID != groupID {
 			regroup = append(regroup, server.Password)
 		}
-		row := &model.CsqttMember{InboundId: inbound.Id, ClientEmail: client.Email, Password: server.Password, Link: server.Link}
+		// Онлайн и трафик — по счётчикам самого участника, а не по I/O процесса.
+		if member.Password == server.Password && member.Id != 0 {
+			up, down := server.Up-member.UpBytes, server.Down-member.DownBytes
+			if server.Up < member.UpBytes {
+				up = server.Up // CSQTT перезапускался — счётчики с нуля
+			}
+			if server.Down < member.DownBytes {
+				down = server.Down
+			}
+			if up > 0 || down > 0 {
+				traffic = append(traffic, &xray.ClientTraffic{Email: client.Email, Up: up, Down: down})
+			}
+		}
+		if server.ActiveSessions > 0 && server.Active {
+			online = append(online, client.Email)
+		}
+		row := &model.CsqttMember{InboundId: inbound.Id, ClientEmail: client.Email, Password: server.Password, Link: server.Link,
+			UpBytes: server.Up, DownBytes: server.Down}
 		if err := database.GetDB().Where("inbound_id = ? AND client_email = ?", inbound.Id, client.Email).Assign(row).FirstOrCreate(row).Error; err != nil {
 			return err
 		}
+	}
+	tag := strings.TrimSpace(inbound.Tag)
+	if len(traffic) > 0 {
+		if _, _, err := (&InboundService{}).AddTraffic(nil, traffic); err != nil {
+			logger.Warning("csqtt members: add traffic failed:", err)
+		}
+		now := time.Now().UnixMilli()
+		for _, t := range traffic {
+			RecordLiveInbound(t.Email, tag, t.Up+t.Down, now)
+		}
+	}
+	if len(online) > 0 {
+		(&InboundService{}).RefreshLocalOnlineClients(online, []string{tag})
 	}
 	if len(regroup) > 0 {
 		if err := api.setGroup(ctx, regroup, groupID); err != nil {
