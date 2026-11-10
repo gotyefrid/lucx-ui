@@ -88,6 +88,10 @@ func allModels() []any {
 		&model.OutboundSubscription{},
 		&model.SubBalancer{},
 		&model.CsqttMember{},
+		// LUCX-HOOK: индивидуальные пароли qWDTT и VK-хеши клиентов
+		&model.QwdttMember{},
+		&model.TunnelClientVk{},
+		// END LUCX-HOOK
 		&model.TuicTrafficReceipt{},
 		&model.ClientWarpAccount{},
 	}

@@ -61,6 +61,12 @@ type QwdttConfig struct {
 	// OutboundTag optional force-route target (empty = Xray default kettle).
 	OutboundTag string `json:"outboundTag"`
 
+	// PerClient: каждый клиент панели получает свой пароль на сервере
+	// (admin API на 127.0.0.1). Выключено = общий пароль, как раньше.
+	PerClient bool `json:"perClient,omitempty"`
+	// AdminPort — порт admin API на loopback; 0 = QwdttAdminDefaultPort.
+	AdminPort int `json:"adminPort,omitempty"`
+
 	MigratedToInbound bool `json:"migratedToInbound,omitempty"`
 	MigratedInboundId int  `json:"migratedInboundId,omitempty"`
 }
@@ -135,6 +141,15 @@ func (c QwdttConfig) Validate() error {
 	}
 	if c.Workers < 1 || c.Workers > 64 {
 		return errors.New("qwdtt: workers must be in 1..64")
+	}
+	if c.AdminPort < 0 || c.AdminPort > 65535 {
+		return errors.New("qwdtt: adminPort must be in 0..65535")
+	}
+	if c.PerClient {
+		admin := c.EffectiveAdminPort()
+		if admin == c.WGPort || admin == c.publicDTLSPort() {
+			return errors.New("qwdtt: adminPort must differ from the DTLS and WG ports")
+		}
 	}
 	return nil
 }
@@ -265,8 +280,18 @@ func (c QwdttConfig) peerHost() string {
 // Never concatenate LegacyURI onto this string — a second line is parsed as
 // part of pass and the DTLS handshake dies. Empty password or peer yields "".
 func (c QwdttConfig) ClientURI() string {
+	return c.configURI(c.Password, strings.TrimSpace(c.VkHashes))
+}
+
+// MemberURI — то же, что ClientURI, но с паролем и хешами конкретного
+// клиента (режим perClient).
+func (c QwdttConfig) MemberURI(password, hashes string) string {
+	return c.configURI(password, NormalizeVkHashes(hashes))
+}
+
+func (c QwdttConfig) configURI(password, hashes string) string {
 	peer := c.peerHost()
-	pass := strings.TrimSpace(c.Password)
+	pass := strings.TrimSpace(password)
 	if peer == "" || pass == "" {
 		return ""
 	}
@@ -277,7 +302,7 @@ func (c QwdttConfig) ClientURI() string {
 	q := url.Values{}
 	q.Set("name", name)
 	q.Set("peer", peer)
-	if h := strings.TrimSpace(c.VkHashes); h != "" {
+	if h := hashes; h != "" {
 		q.Set("hashes", h)
 	}
 	q.Set("workers", strconv.Itoa(c.Workers))
@@ -302,6 +327,42 @@ func (c QwdttConfig) LegacyURI() string {
 	}
 	return fmt.Sprintf("wdtt://%s:%d:%d:%d:%s:%s",
 		host, c.publicDTLSPort(), c.WGPort, c.ClientPort, pass, hash)
+}
+
+// MemberLegacyURI — классическая ссылка wdtt://ip:dtls:wg:local:pass:hashes
+// для клиента perClient; в отличие от LegacyURI несёт все хеши через запятую.
+// Только для показа в панели: в тело подписки её не кладём (см. ClientURI).
+func (c QwdttConfig) MemberLegacyURI(password, hashes string) string {
+	peer := c.peerHost()
+	pass := strings.TrimSpace(password)
+	hashes = NormalizeVkHashes(hashes)
+	if peer == "" || pass == "" || hashes == "" {
+		return ""
+	}
+	host := peer
+	if h, _, err := net.SplitHostPort(peer); err == nil {
+		host = h
+	}
+	return fmt.Sprintf("wdtt://%s:%d:%d:%d:%s:%s",
+		host, c.publicDTLSPort(), c.WGPort, c.ClientPort, pass, hashes)
+}
+
+// NormalizeVkHashes приводит список VK-хешей к виду "h1,h2": убирает пробелы,
+// переводы строк и пустые элементы, сохраняя порядок и отбрасывая дубли.
+func NormalizeVkHashes(raw string) string {
+	fields := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == ',' || r == ';' || r == ' ' || r == '\n' || r == '\r' || r == '\t'
+	})
+	seen := make(map[string]struct{}, len(fields))
+	out := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if _, dup := seen[f]; dup {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return strings.Join(out, ",")
 }
 
 // QwdttSubProfile is one profile inside a qWDTT subscription JSON document.

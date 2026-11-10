@@ -511,7 +511,11 @@ func (j *TunnelJob) collectQwdttTraffic() {
 			// the same bytes.
 			routedTags[tag] = true
 		}
-		emailsByTag[tag] = anytlsEmailsForInbound(ib)
+		// perClient: трафик клиентов считает QwdttMemberService по счётчикам
+		// паролей; здесь только инбаунд, иначе единственный клиент получит его дважды.
+		if cfg, ok := tunnel.QwdttConfigFromInbound(ib); !ok || !cfg.QwdttPerClientActive() {
+			emailsByTag[tag] = anytlsEmailsForInbound(ib)
+		}
 		snaps = append(snaps, tunnel.GetManager().CollectQwdttTraffic(tag))
 	}
 	j.commitSidecarScrape("qwdtt", snaps, emailsByTag, routedTags)

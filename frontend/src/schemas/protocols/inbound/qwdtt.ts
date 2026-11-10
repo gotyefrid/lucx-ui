@@ -20,5 +20,7 @@ export const QwdttInboundSettingsSchema = z.object({
   workers: z.number().int().min(1).max(64).default(16),
   routeThroughXray: z.boolean().default(true),
   outboundTag: z.string().default(''),
+  perClient: z.boolean().default(false),
+  adminPort: z.number().int().min(0).max(65535).default(0),
 });
 export type QwdttInboundSettings = z.infer<typeof QwdttInboundSettingsSchema>;

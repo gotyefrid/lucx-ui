@@ -651,7 +651,14 @@ func (s *SubService) inboundLinks(inbound *model.Inbound) []string {
 	// LUCX-HOOK: AnyTls is single-credential unless its server takes one
 	// password per client.
 	anytlsShared := inbound != nil && inbound.Protocol == model.Anytls && (inbound.NodeID != nil || !tunnel.AnytlsSupportsUsers())
-	if inbound != nil && (inbound.Protocol == model.Olcrtc || inbound.Protocol == model.Qwdtt || inbound.Protocol == model.Csqtt || inbound.Protocol == model.Openflux || anytlsShared) {
+	// qWDTT в режиме perClient экспортирует ссылки каждого клиента.
+	qwdttShared := inbound != nil && inbound.Protocol == model.Qwdtt
+	if qwdttShared && inbound.NodeID == nil {
+		if cfg, ok := tunnel.QwdttConfigFromInbound(inbound); ok && cfg.QwdttPerClientActive() {
+			qwdttShared = false
+		}
+	}
+	if inbound != nil && (inbound.Protocol == model.Olcrtc || qwdttShared || inbound.Protocol == model.Csqtt || inbound.Protocol == model.Openflux || anytlsShared) {
 		if link := s.GetLink(inbound, ""); link != "" {
 			return splitLinkLines(sidecarSubNameMacro(link, inbound))
 		}
@@ -998,8 +1005,8 @@ func (s *SubService) GetLink(inbound *model.Inbound, email string) string {
 		return s.genTrustTunnelLink(inbound, email)
 	case "olcrtc": // LUCX-HOOK: single-credential olcRTC URI (ignore email)
 		return s.genOlcrtcLink(inbound)
-	case "qwdtt": // LUCX-HOOK: single-credential qWDTT URI (ignore email)
-		return s.genQwdttLink(inbound)
+	case "qwdtt": // LUCX-HOOK: qWDTT URI — общий пароль или пароль клиента (perClient)
+		return s.genQwdttLink(inbound, email)
 	case "csqtt": // LUCX-HOOK: single-credential CSQTT URI (ignore email)
 		if email != "" {
 			if link, ok := service.GetCsqttMemberService().Link(inbound.Id, email); ok {
@@ -3809,7 +3816,7 @@ func (s *SubService) genOlcrtcLink(inbound *model.Inbound) string {
 // whole clipboard as one URI, so a second line corrupts pass and DTLS dies.
 // EnsureSubHost fills an empty peer from the host's outbound IPv4 so export
 // works for pre-lucx.108 rows that never stored subHost (no DB write here).
-func (s *SubService) genQwdttLink(inbound *model.Inbound) string {
+func (s *SubService) genQwdttLink(inbound *model.Inbound, email string) string {
 	cfg, ok := tunnel.QwdttConfigFromInbound(inbound)
 	if !ok || !inbound.Enable {
 		return ""
@@ -3819,6 +3826,24 @@ func (s *SubService) genQwdttLink(inbound *model.Inbound) string {
 		if strings.TrimSpace(cfg.SubHost) == "" {
 			cfg = cfg.EnsureSubHost()
 		}
+	}
+	// perClient: у клиента свой пароль и свои VK-хеши. Главный пароль
+	// владельца клиентам не раздаём — пока пароль не создан, ссылки нет.
+	if email != "" && cfg.QwdttPerClientActive() && inbound.NodeID == nil {
+		pass, ok := service.GetQwdttMemberService().Password(inbound.Id, email)
+		if !ok {
+			return ""
+		}
+		hashes := service.EffectiveVkHashes(email, cfg.VkHashes)
+		link := cfg.MemberURI(pass, hashes)
+		// wdtt:// — только в панели и на странице подписки: в теле /sub
+		// вторая строка ломает импорт SpaceNeuroX (см. комментарий выше).
+		if link != "" && !s.subscriptionBody {
+			if legacy := cfg.MemberLegacyURI(pass, hashes); legacy != "" {
+				link += "\n" + legacy
+			}
+		}
+		return link
 	}
 	return cfg.ClientURI()
 }

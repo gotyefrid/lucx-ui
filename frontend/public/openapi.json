@@ -11931,6 +11931,127 @@
         }
       }
     },
+    "/panel/api/tunnel/clientVk/{email}": {
+      "get": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Client's own VK call hashes for qWDTT/CSQTT (empty = the inbound's hashes) and the state of its per-client passwords on every attached qWDTT/CSQTT inbound. LucX-UI only.",
+        "operationId": "get_panel_api_tunnel_clientVk_email",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "vkHashes": "hashA,hashB",
+                    "members": [
+                      {
+                        "inboundId": 3,
+                        "remark": "qwdtt",
+                        "protocol": "qwdtt",
+                        "ready": true
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Set the client's own VK call hashes (comma-separated; empty clears) and resync qWDTT/CSQTT members. Links pick the new hashes up on the next sync. LucX-UI only.",
+        "operationId": "post_panel_api_tunnel_clientVk_email",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "vkHashes": "hashA,hashB"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "vkHashes": "hashA,hashB",
+                    "members": [
+                      {
+                        "inboundId": 3,
+                        "remark": "qwdtt",
+                        "protocol": "qwdtt",
+                        "ready": true
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnel/tproxy/status": {
       "get": {
         "tags": [

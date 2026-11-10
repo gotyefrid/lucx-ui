@@ -383,6 +383,8 @@ export function createDefaultQwdttInboundSettings(): QwdttInboundSettings {
     workers: 16,
     routeThroughXray: true,
     outboundTag: '',
+    perClient: false,
+    adminPort: 0,
   };
 }
 

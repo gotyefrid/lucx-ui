@@ -153,6 +153,9 @@ func (a *TunnelController) restartXrayIfNeeded(need bool) {
 
 func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/hostCheck", a.hostCheck)
+	// Индивидуальные VK-хеши клиента для qWDTT/CSQTT и состояние его доступов.
+	g.GET("/clientVk/:email", a.getClientVk)
+	g.POST("/clientVk/:email", a.setClientVk)
 
 	naive := g.Group("/naive")
 	naive.GET("/status", a.status)
@@ -1348,4 +1351,46 @@ func tproxyLogLines(c *gin.Context) int {
 		}
 	}
 	return lines
+}
+
+// clientVkResponse — VK-хеши клиента и состояние его qWDTT/CSQTT-доступов.
+type clientVkResponse struct {
+	VkHashes string                       `json:"vkHashes"`
+	Members  []service.TunnelMemberStatus `json:"members"`
+}
+
+func (a *TunnelController) getClientVk(c *gin.Context) {
+	email := strings.TrimSpace(c.Param("email"))
+	if email == "" {
+		jsonMsg(c, I18nWeb(c, "somethingWentWrong"), common.NewError("email is required"))
+		return
+	}
+	jsonObj(c, clientVkResponse{
+		VkHashes: service.ClientVkHashes(email),
+		Members:  service.ClientTunnelStatus(email),
+	}, nil)
+}
+
+func (a *TunnelController) setClientVk(c *gin.Context) {
+	email := strings.TrimSpace(c.Param("email"))
+	var req struct {
+		VkHashes string `json:"vkHashes"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "somethingWentWrong"), err)
+		return
+	}
+	if len(req.VkHashes) > 4096 {
+		jsonMsg(c, I18nWeb(c, "somethingWentWrong"), common.NewError("vkHashes is too long"))
+		return
+	}
+	if err := service.SetClientVkHashes(email, req.VkHashes); err != nil {
+		jsonMsg(c, I18nWeb(c, "somethingWentWrong"), err)
+		return
+	}
+	service.TriggerCsqttMemberSync()
+	jsonObj(c, clientVkResponse{
+		VkHashes: service.ClientVkHashes(email),
+		Members:  service.ClientTunnelStatus(email),
+	}, nil)
 }

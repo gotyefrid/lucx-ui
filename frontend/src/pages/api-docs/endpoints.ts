@@ -1652,6 +1652,23 @@ export const sections: readonly Section[] = [
       },
       {
         method: 'GET',
+        path: '/panel/api/tunnel/clientVk/:email',
+        summary:
+          "Client's own VK call hashes for qWDTT/CSQTT (empty = the inbound's hashes) and the state of its per-client passwords on every attached qWDTT/CSQTT inbound. LucX-UI only.",
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "vkHashes": "hashA,hashB",\n    "members": [\n      { "inboundId": 3, "remark": "qwdtt", "protocol": "qwdtt", "ready": true }\n    ]\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnel/clientVk/:email',
+        summary:
+          "Set the client's own VK call hashes (comma-separated; empty clears) and resync qWDTT/CSQTT members. Links pick the new hashes up on the next sync. LucX-UI only.",
+        body: '{\n  "vkHashes": "hashA,hashB"\n}',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "vkHashes": "hashA,hashB",\n    "members": [\n      { "inboundId": 3, "remark": "qwdtt", "protocol": "qwdtt", "ready": true }\n    ]\n  }\n}',
+      },
+      {
+        method: 'GET',
         path: '/panel/api/tunnel/tproxy/status',
         summary:
           'Telegram WEB proxy core status for the Cores page: tproxy-server binary and process state. LucX-UI only.',

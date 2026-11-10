@@ -78,6 +78,8 @@ func GetCsqttMemberService() *CsqttMemberService { return &csqttMemberSync }
 // TriggerCsqttMemberSync refreshes members after a committed panel mutation.
 // The periodic job remains the recovery path when the CSQTT API is unavailable.
 func TriggerCsqttMemberSync() {
+	// Те же мутации клиентов затрагивают и пароли qWDTT (perClient).
+	TriggerQwdttMemberSync()
 	done := database.BeginBackgroundDB()
 	common.GoRecover("csqtt-member-sync", func() {
 		defer done()
@@ -147,8 +149,7 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 	// VK settings of managed members follow the inbound only once the inbound
 	// configures some (hashes or the token switch); with neither set, members
 	// keep whatever an operator chose for them in the CSQTT panel.
-	vkHashes, vkToken := cfg.MemberVkHashes(), cfg.MemberVkToken()
-	enforceVk := vkHashes != "" || vkToken
+	inboundHashes, vkToken := cfg.MemberVkHashes(), cfg.MemberVkToken()
 	var regroup []string
 	linksStale := false
 	desired := make(map[string]struct{}, len(clients))
@@ -163,13 +164,19 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 				wantActive = traffic.Up+traffic.Down < client.TotalGB
 			}
 		}
+		// Индивидуальные VK-хеши клиента важнее хешей инбаунда.
+		vkHashes, clientToken := inboundHashes, vkToken
+		if own := tunnel.CsqttMemberHashes(ClientVkHashes(client.Email)); own != "" {
+			vkHashes, clientToken = own, false
+		}
+		enforceVk := vkHashes != "" || clientToken
 		member, managed := s.managedMember(inbound.Id, client.Email)
 		server, exists := byName[client.Email]
 		if !exists {
 			server, err = api.create(ctx, csqttMemberClientRequest{
 				Name:    client.Email,
 				Hash:    vkHashes,
-				VkToken: vkToken,
+				VkToken: clientToken,
 				GroupID: groupID,
 			})
 			if err != nil {
@@ -195,8 +202,8 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 			}
 			server.Active = wantActive
 		}
-		if enforceVk && (server.VkHashes != vkHashes || server.VkToken != vkToken) {
-			if err := api.setVk(ctx, server.Password, vkHashes, vkToken); err != nil {
+		if enforceVk && (server.VkHashes != vkHashes || server.VkToken != clientToken) {
+			if err := api.setVk(ctx, server.Password, vkHashes, clientToken); err != nil {
 				return err
 			}
 			linksStale = true

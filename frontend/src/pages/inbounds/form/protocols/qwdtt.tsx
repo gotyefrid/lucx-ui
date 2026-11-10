@@ -14,6 +14,7 @@ import { useOutboundTags } from '@/api/queries/useOutboundTags';
 export default function QwdttFields() {
   const { t } = useTranslation();
   const routeThroughXray = useWatch({ name: 'settings.routeThroughXray' }) as boolean | undefined;
+  const perClient = useWatch({ name: 'settings.perClient' }) as boolean | undefined;
   const { data: outboundTags } = useOutboundTags();
   return (
     <>
@@ -23,6 +24,23 @@ export default function QwdttFields() {
         style={{ marginBottom: 12 }}
         message={t('pages.inbounds.form.qwdttSingleNote')}
       />
+      <FormField
+        name={['settings', 'perClient']}
+        label={t('pages.inbounds.form.qwdttPerClient')}
+        tooltip={t('pages.inbounds.form.qwdttPerClientHint')}
+        valueProp="checked"
+      >
+        <Switch />
+      </FormField>
+      {perClient && (
+        <FormField
+          name={['settings', 'adminPort']}
+          label={t('pages.inbounds.form.qwdttAdminPort')}
+          tooltip={t('pages.inbounds.form.qwdttAdminPortHint')}
+        >
+          <InputNumber min={0} max={65535} placeholder="56010" style={{ width: '100%' }} />
+        </FormField>
+      )}
       <FormField
         name={['settings', 'routeThroughXray']}
         label={t('pages.inbounds.form.qwdttRouteThroughXray')}

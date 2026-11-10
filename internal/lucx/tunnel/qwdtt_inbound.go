@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 )
 
 // QwdttKey is the single manager key for the panel's qWDTT inbound
@@ -74,11 +75,21 @@ func QwdttInstanceFromInbound(ib *model.Inbound) (Instance, bool) {
 	if strings.TrimSpace(cfg.ConfigDir) == "" {
 		cfg.ConfigDir = dataDirFor(QwdttKey, Qwdtt)
 	}
+	args := cfg.BuildArgs()
+	// perClient: admin API на loopback, через него панель заводит пароли
+	// клиентов. Нет файлов/поддержки в бинаре — работаем как раньше (общий пароль).
+	if cfg.QwdttPerClientActive() {
+		if files, err := EnsureQwdttAdminFiles(cfg.ResolveConfigDir()); err != nil {
+			logger.Warning("qwdtt: admin API files:", err)
+		} else {
+			args = append(args, files.AdminArgs(cfg.AdminAddr())...)
+		}
+	}
 	inst := Instance{
 		Core:      Qwdtt,
 		Key:       QwdttKey,
 		Enabled:   true,
-		Args:      cfg.BuildArgs(),
+		Args:      args,
 		ProbePort: 0,
 	}
 	if cfg.RouteThroughXray {

@@ -64,6 +64,12 @@ func (c CsqttConfig) MemberVkHashes() string {
 	return strings.Join(csqttHashList(c.VkHashes), ",")
 }
 
+// CsqttMemberHashes нормализует индивидуальные VK-хеши клиента так же, как
+// хеши инбаунда (CSQTT принимает не больше 6).
+func CsqttMemberHashes(raw string) string {
+	return strings.Join(csqttHashList(raw), ",")
+}
+
 // MemberVkToken reports whether member links carry the VK token: requested
 // and not overridden by explicit VK call hashes.
 func (c CsqttConfig) MemberVkToken() bool {

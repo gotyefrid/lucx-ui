@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AutoComplete,
@@ -56,6 +56,9 @@ import type {
 } from '@/hooks/useClients';
 import { useFail2banStatusQuery, getLimitIpNotice } from '@/api/queries/useFail2banStatusQuery';
 import ClientRenewalFields from './ClientRenewalFields';
+// LUCX-HOOK: индивидуальные VK-хеши клиента для qWDTT/CSQTT
+import ClientTunnelVkSection, { type ClientTunnelVkHandle } from './ClientTunnelVkSection';
+// END LUCX-HOOK
 import { ClientFormSchema, ClientCreateFormSchema, type ClientFormValues } from '@/schemas/client';
 import './ClientFormModal.css';
 
@@ -287,6 +290,7 @@ export default function ClientFormModal({
   const isEdit = mode === 'edit';
 
   const methods = useForm<Values>({ defaultValues: EMPTY });
+  const tunnelVkRef = useRef<ClientTunnelVkHandle>(null); // LUCX-HOOK: VK-хеши qWDTT/CSQTT
   const inboundIds = useWatch({ control: methods.control, name: 'inboundIds' });
   const delayedStart = useWatch({ control: methods.control, name: 'delayedStart' });
   const delayedDays = useWatch({ control: methods.control, name: 'delayedDays' });
@@ -948,6 +952,9 @@ export default function ClientFormModal({
           { isEdit: false, email: clientPayload.email as string, externalLinks },
         );
       }
+      // LUCX-HOOK: VK-хеши сохраняем после клиента — до этого его email может не существовать.
+      if (msg?.success) await tunnelVkRef.current?.save(clientPayload.email as string);
+      // END LUCX-HOOK
       if (msg?.success) close();
     } finally {
       setSubmitting(false);
@@ -1643,6 +1650,15 @@ export default function ClientFormModal({
                           </FormField>
                         </>
                       )}
+                      {/* LUCX-HOOK: VK-хеши клиента для qWDTT/CSQTT */}
+                      <ClientTunnelVkSection
+                        ref={tunnelVkRef}
+                        open={open}
+                        email={isEdit ? client?.email || '' : ''}
+                        inbounds={inbounds}
+                        inboundIds={inboundIds}
+                      />
+                      {/* END LUCX-HOOK */}
                     </>
                   ),
                 },
