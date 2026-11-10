@@ -223,8 +223,6 @@ if ! have "qwdtt-linux-${ARCH}"; then
     git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-password-limit.patch"
     # LucX: онлайн пароля по его подключениям — старые клиенты делят device_id "unknown".
     git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-active-devices.patch"
-    # LucX: клиент без device_id получает устройство своего пароля, а не общее "unknown".
-    git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-legacy-device-id.patch"
     (
         cd /tmp/qwdtt
         GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH="${ARCH}" go build -trimpath -ldflags="-s -w" -o "${DEST}/qwdtt-linux-${ARCH}" ./server
