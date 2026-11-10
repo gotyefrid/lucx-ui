@@ -101,7 +101,7 @@ i18n: extra keys in all 14 `internal/web/translation/*.json` have **no** HOOK. D
 | `internal/web/service/client_paging.go` | neverLogIps in the slim list (lucx.342) |
 | `internal/web/service/xray.go` + `xray_config_inject_test.go` | inject AWG TUN/outbounds |
 | `internal/web/service/setting.go` | lucx settings keys |
-| `internal/web/service/server.go` `backupSQLite` / `ImportDB` | embed + restore the masking-site files (backup_site_files.go, lucx.313) |
+| `internal/web/service/server.go` `backupSQLite` / `ImportDB` | embed + restore the masking-site files (backup_site_files.go, lucx.313) and the sidecar `bin/tunnel/*-data` state (backup_tunnel_state.go: SQLite via `VACUUM INTO`, logs/tmp/-wal skipped, sidecars stopped under `tunnelStateMu` while dirs are replaced, then `Reconcile`) |
 | `internal/web/service/node.go` + `node_contract.go` | lucx node |
 | `internal/web/service/port_conflict.go` | lucx transports |
 | `internal/web/service/panel/panel.go` + `panel_test.go` | release notes / version |
@@ -225,7 +225,7 @@ Keep the directory. Origin will not have these.
 | `internal/web/controller/awg.go` `awg_outbound.go` `lucx.go` `tunnel.go` `sidecar_outbound.go` `kernel_wireguard.go` `wgo.go` `scanguard.go` `cleanip.go` | LucX API |
 | `internal/web/job/awg_job.go` `awg_speed_buffer.go` `tunnel_job.go` `log_retention_job.go` `kernel_wireguard_job.go` `scanguard_job.go` | LucX jobs (wgo reconcile lives in kernel_wireguard_job + tunnel_job) |
 | `internal/web/favicon/` | panel tab icon |
-| `internal/web/service/inbound_lucx.go` `client_awg.go` `awg_*.go` `tunnel.go` `gateway.go` `sidecar_outbound.go` `lucx_online.go` `network_tuning.go` `client_tunnel_creds.go` `kernel_wireguard.go` `kernel_wgosocks_test.go` `backup_site_files{,_test}.go` `scanguard.go` `cleanip.go` | LucX service |
+| `internal/web/service/inbound_lucx.go` `client_awg.go` `awg_*.go` `tunnel.go` `gateway.go` `sidecar_outbound.go` `lucx_online.go` `network_tuning.go` `client_tunnel_creds.go` `kernel_wireguard.go` `kernel_wgosocks_test.go` `backup_site_files{,_test}.go` `backup_tunnel_state{,_test}.go` `scanguard.go` `cleanip.go` | LucX service |
 | `internal/web/service/ip_privacy.go` `ip_provider.go` `live_inbounds.go` + their `_test.go` | IP privacy / provider / live inbounds (lucx.342) |
 | `internal/sub/sub_site_test.go` `service_anytls_test.go` | lucx sub tests (lucx.342) |
 | `internal/sub/json_client_warp.go` + `_test.go`, `internal/util/clientwarp/` | PR #185: client-side WARP in the JSON sub (lucx.342) |

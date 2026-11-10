@@ -1714,6 +1714,10 @@ func (s *ServerService) backupSQLite() (string, func(), error) {
 		cleanup()
 		return "", nil, fmt.Errorf("backup: embed site files: %w", err)
 	}
+	if err := embedBackupTunnelState(backupPath); err != nil {
+		cleanup()
+		return "", nil, fmt.Errorf("backup: embed tunnel state: %w", err)
+	}
 	// END LUCX-HOOK
 	return backupPath, cleanup, nil
 }
@@ -2034,6 +2038,12 @@ func (s *ServerService) ImportDB(file multipart.File, keepHostSettings bool) err
 	// (backup_site_files.go). DB-only backups restore unchanged.
 	if err := restoreBackupSiteFiles(); err != nil {
 		return fmt.Errorf("imported DB but failed to restore site files: %w", err)
+	}
+	// Sidecars are stopped while their state dirs are replaced; bring them back either way.
+	stateErr := restoreBackupTunnelState()
+	(&TunnelService{}).Reconcile()
+	if stateErr != nil {
+		return fmt.Errorf("imported DB but failed to restore tunnel state: %w", stateErr)
 	}
 	// END LUCX-HOOK
 

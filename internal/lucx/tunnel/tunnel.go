@@ -239,6 +239,11 @@ func workDir() string {
 	return tunnelDir()
 }
 
+// WorkDir is the exported workDir: the web layer backs up the *-data state dirs under it.
+func WorkDir() string {
+	return workDir()
+}
+
 // mkdirPrivate creates a sidecar's private (0700) dir under workDir. The
 // shared workDir is created first with 0755: MkdirAll would otherwise give a
 // missing workDir the same 0700, and a sidecar running under another uid
