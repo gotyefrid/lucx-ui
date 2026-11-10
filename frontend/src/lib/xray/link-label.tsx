@@ -41,7 +41,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   masterdns: 'MasterDnsVPN', // LUCX-HOOK: masterdns:// client-config wrapper
   aivpn: 'AIVPN', // LUCX-HOOK: aivpn:// connection key
   openflux: 'OpenFlux',
-  wdtt: 'qWDTT',
+  wdtt: 'WDTT', // LUCX-HOOK: классическая wdtt:// (отдельная метка от qwdtt://)
   mieru: 'mieru',
   mierus: 'mieru',
   tt: 'TrustTunnel',
@@ -64,6 +64,7 @@ const PROTOCOL_COLORS: Record<string, string> = {
   Naive: 'orange',
   olcRTC: 'cyan',
   qWDTT: 'gold',
+  WDTT: 'lime', // LUCX-HOOK
   MasterDnsVPN: 'green', // LUCX-HOOK: masterdns://
   mieru: 'geekblue',
   TrustTunnel: 'purple',
@@ -202,7 +203,12 @@ export function parseLinkParts(link: string): LinkParts | null {
     } catch {
       remark = '';
     }
-  } else if (scheme === 'qwdtt' || scheme === 'wdtt') {
+  } else if (scheme === 'wdtt') {
+    // LUCX-HOOK: wdtt://host:dtls:wg:port:pass:hashes — не URL, имя = хост
+    const body = trimmed.slice('wdtt://'.length);
+    remark = body.split(':')[0] || '';
+    port = body.split(':')[1] || '';
+  } else if (scheme === 'qwdtt') {
     try {
       const url = new URL(trimmed.replace(/^wdtt:/i, 'qwdtt:'));
       remark = url.searchParams.get('name') || url.searchParams.get('peer') || '';
@@ -346,6 +352,7 @@ const PROTOCOL_RANK: Record<string, number> = {
   AmneziaWG: 11,
   olcRTC: 12,
   qWDTT: 13,
+  WDTT: 13, // LUCX-HOOK
   mieru: 14,
   TrustTunnel: 15,
 };

@@ -87,6 +87,12 @@ describe('link-label parseLinkParts', () => {
     );
   });
 
+  it('labels the classic wdtt:// link apart from qwdtt://', () => {
+    const parts = parseLinkParts('wdtt://1.2.3.4:56000:56001:9000:pass:h1,h2');
+    expect(parts?.protocol).toBe('WDTT');
+    expect(parts?.remark).toBe('1.2.3.4');
+  });
+
   it('labels an AmneziaWG vpn:// link with its decoded remark and endpoint port', () => {
     const settings = {
       server: {
