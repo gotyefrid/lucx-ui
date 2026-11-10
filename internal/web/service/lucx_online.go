@@ -139,3 +139,37 @@ func (s *ClientService) detachShareOnlyClient(inboundSvc *InboundService, inboun
 		return s.ApplyInboundClientDelta(tx, inboundId, nil, clean)
 	})
 }
+
+// syncShareOnlyClientStat переносит строку client_traffics клиента
+// share-only сайдкара при переименовании и обновляет enable/срок/лимит.
+// Без этого трафик переименованного клиента писался под несуществующий email.
+func syncShareOnlyClientStat(tx *gorm.DB, inboundSvc *InboundService, inboundId int, oldEmail string, client *model.Client) error {
+	newEmail := strings.TrimSpace(client.Email)
+	oldEmail = strings.TrimSpace(oldEmail)
+	if oldEmail == "" {
+		oldEmail = newEmail
+	}
+	var oldRows, newRows int64
+	if err := tx.Model(xray.ClientTraffic{}).Where("email = ?", oldEmail).Count(&oldRows).Error; err != nil {
+		return err
+	}
+	if oldEmail != newEmail {
+		if err := tx.Model(xray.ClientTraffic{}).Where("email = ?", newEmail).Count(&newRows).Error; err != nil {
+			return err
+		}
+	}
+	switch {
+	case oldRows > 0 && newRows == 0:
+		if err := inboundSvc.UpdateClientStat(tx, oldEmail, client); err != nil {
+			return err
+		}
+		if oldEmail != newEmail {
+			return inboundSvc.UpdateClientIPs(tx, oldEmail, newEmail)
+		}
+		return nil
+	case newRows > 0:
+		return inboundSvc.UpdateClientStat(tx, newEmail, client)
+	default:
+		return inboundSvc.AddClientStat(tx, inboundId, client)
+	}
+}

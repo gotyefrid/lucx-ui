@@ -799,6 +799,11 @@ func (s *ClientService) UpdateInboundClient(inboundSvc *InboundService, data *mo
 				}
 				detachEmails = []string{oldEmail}
 			}
+			// Статистика (client_traffics) идёт за клиентом: переименование и
+			// enable/срок/лимит, иначе трафик пишется в пустоту, а лимиты не действуют.
+			if e := syncShareOnlyClientStat(tx, inboundSvc, oldInbound.Id, oldEmail, &clients[0]); e != nil {
+				return e
+			}
 			return s.ApplyInboundClientDelta(tx, oldInbound.Id, clients[:1], detachEmails)
 		}); txErr != nil {
 			return false, txErr
