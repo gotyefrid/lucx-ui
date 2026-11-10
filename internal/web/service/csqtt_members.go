@@ -151,6 +151,7 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 	// keep whatever an operator chose for them in the CSQTT panel.
 	inboundHashes, vkToken := cfg.MemberVkHashes(), cfg.MemberVkToken()
 	var regroup []string
+	var vkErr error
 	linksStale := false
 	desired := make(map[string]struct{}, len(clients))
 	for _, client := range clients {
@@ -203,10 +204,16 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 			server.Active = wantActive
 		}
 		if enforceVk && (server.VkHashes != vkHashes || server.VkToken != clientToken) {
+			// Неверный хеш одного клиента (CSQTT отвечает 400) не должен
+			// останавливать синхронизацию остальных.
 			if err := api.setVk(ctx, server.Password, vkHashes, clientToken); err != nil {
-				return err
+				logger.Warningf("csqtt members: client %q VK hashes rejected: %v", client.Email, err)
+				if vkErr == nil {
+					vkErr = fmt.Errorf("client %q: %w", client.Email, err)
+				}
+			} else {
+				linksStale = true
 			}
-			linksStale = true
 		}
 		if groupID != "" && server.GroupID != groupID {
 			regroup = append(regroup, server.Password)
@@ -245,7 +252,7 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 			return err
 		}
 	}
-	return nil
+	return vkErr
 }
 
 // refreshLinks re-reads member links after a change that CSQTT bakes into
