@@ -1617,6 +1617,9 @@ type BulkSetEnableReport struct {
 
 func (s *ClientService) BulkSetEnable(inboundSvc *InboundService, emails []string, enable bool) (BulkSetEnableResult, bool, error) {
 	result := BulkSetEnableResult{}
+	// LUCX-HOOK: qWDTT/CSQTT members follow the new enable once the records are written.
+	defer TriggerCsqttMemberSync()
+	// END LUCX-HOOK
 
 	cleanEmails := trimmedUniqueEmails(emails)
 	if len(cleanEmails) == 0 {
@@ -1738,6 +1741,13 @@ func (s *ClientService) bulkSetEnableInboundClients(inboundSvc *InboundService, 
 		}
 		return res
 	}
+
+	// LUCX-HOOK: share-only sidecars have no settings.clients; enable lives on the
+	// client record the caller updates, and the member sync applies it.
+	if shareOnlySidecar(oldInbound.Protocol) {
+		return res
+	}
+	// END LUCX-HOOK
 
 	var settings map[string]any
 	if err := json.Unmarshal([]byte(oldInbound.Settings), &settings); err != nil {

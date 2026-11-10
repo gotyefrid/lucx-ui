@@ -477,6 +477,14 @@ func (s *InboundService) GetClientByEmail(clientEmail string) (*xray.ClientTraff
 			return traffic, &client, nil
 		}
 	}
+	// LUCX-HOOK: share-only sidecars keep clients only in the clients table,
+	// settings.clients is empty there (bot links/QR failed on wdtt/CSQTT clients).
+	if shareOnlySidecar(inbound.Protocol) {
+		if rec, recErr := s.clientService.GetRecordByEmail(nil, clientEmail); recErr == nil {
+			return traffic, rec.ToClient(), nil
+		}
+	}
+	// END LUCX-HOOK
 
 	return nil, nil, common.NewError("Client Not Found In Inbound For Email:", clientEmail)
 }
