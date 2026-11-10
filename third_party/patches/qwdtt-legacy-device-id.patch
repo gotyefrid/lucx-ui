@@ -1,0 +1,139 @@
+diff --git a/server/connections.go b/server/connections.go
+index 664738b..b94b4c1 100644
+--- a/server/connections.go
++++ b/server/connections.go
+@@ -158,6 +158,7 @@ func handleConn(ctx context.Context, clientConn net.Conn, wgEndpoint string, wgD
+ 		if len(parts) > 2 {
+ 			password = parts[2]
+ 		}
++		deviceID = clientDeviceID(deviceID, password)
+ 		if !connectionCredentialMatches(clientConn, password) {
+ 			clientConn.Write([]byte("DENIED:wrong_password"))
+ 			return
+@@ -254,6 +255,7 @@ func handleConn(ctx context.Context, clientConn net.Conn, wgEndpoint string, wgD
+ 		if len(parts) > 1 {
+ 			password = parts[1]
+ 		}
++		deviceID = clientDeviceID(deviceID, password)
+ 		if !connectionCredentialMatches(clientConn, password) {
+ 			clientConn.Write([]byte("DENIED:wrong_password"))
+ 			return
+diff --git a/server/database_bot.go b/server/database_bot.go
+index 6405e85..57b1723 100644
+--- a/server/database_bot.go
++++ b/server/database_bot.go
+@@ -533,6 +533,7 @@ func reloadDB(wgDev *device.Device) error {
+ 	newDB.BotToken = oldDB.BotToken
+ 
+ 	db = newDB
++	migrateLegacyUnknownDevicesLocked()
+ 
+ 	// Очищаем истёкшие
+ 	cleanupExpiredPasswordsLocked(wgDev)
+@@ -584,6 +585,7 @@ func initDB(dir, mainPass, adminID, botToken string) {
+ 		db.Devices = make(map[string]*ClientDevice)
+ 	}
+ 	migrateWGSubnetLocked()
++	migrateLegacyUnknownDevicesLocked()
+ 	db.MainPassword = mainPass
+ 	db.AdminID = adminID
+ 	db.BotToken = botToken
+@@ -645,6 +647,35 @@ func isPasswordExpired(entry *PasswordEntry) bool {
+ 	return time.Now().Unix() > entry.ExpiresAt
+ }
+ 
++// clientDeviceID даёт клиенту без device_id устройство своего пароля: иначе все
++// такие клиенты делят одну запись "unknown" (общий ключ и адрес WireGuard).
++func clientDeviceID(deviceID, password string) string {
++	if deviceID == "" || deviceID == "unknown" {
++		return "legacy-" + wrapKeyID(password)
++	}
++	return deviceID
++}
++
++// migrateLegacyUnknownDevicesLocked переписывает старые привязки "unknown" на
++// устройство пароля, чтобы пароль с лимитом в одно устройство не отказал клиенту.
++func migrateLegacyUnknownDevicesLocked() {
++	for password, entry := range db.Passwords {
++		if entry == nil {
++			continue
++		}
++		legacy := clientDeviceID("", password)
++		if entry.DeviceID == "unknown" {
++			entry.DeviceID = legacy
++		}
++		for i, id := range entry.DeviceIDs {
++			if id == "unknown" {
++				entry.DeviceIDs[i] = legacy
++			}
++		}
++	}
++	delete(db.Devices, "unknown")
++}
++
+ func migrateWGSubnetLocked() {
+ 	for _, dev := range db.Devices {
+ 		if dev != nil && strings.HasPrefix(dev.IP, "10.66.") {
+diff --git a/server/legacy_device_test.go b/server/legacy_device_test.go
+new file mode 100644
+index 0000000..4b23e69
+--- /dev/null
++++ b/server/legacy_device_test.go
+@@ -0,0 +1,45 @@
++package main
++
++import "testing"
++
++// Пароли старых клиентов, привязанные к общему "unknown", после загрузки базы
++// должны пускать свой клиент и получать отдельные устройства.
++func TestLegacyUnknownBindingsBecomePerPassword(t *testing.T) {
++	saved := db
++	defer func() { db = saved }()
++	db = &Database{
++		Passwords: map[string]*PasswordEntry{
++			"router-pass": {DeviceID: "unknown", DeviceIDs: []string{"unknown"}},
++			"laptop-pass": {DeviceID: "unknown"},
++			"phone-pass":  {DeviceID: "phone-1", DeviceIDs: []string{"phone-1"}},
++		},
++		Devices: map[string]*ClientDevice{
++			"unknown": {DeviceID: "unknown", IP: "10.68.66.2"},
++			"phone-1": {DeviceID: "phone-1", IP: "10.68.66.3"},
++		},
++	}
++
++	migrateLegacyUnknownDevicesLocked()
++
++	if _, ok := db.Devices["unknown"]; ok {
++		t.Fatal(`shared "unknown" device survived the migration`)
++	}
++	if _, ok := db.Devices["phone-1"]; !ok {
++		t.Fatal("a real device was dropped by the migration")
++	}
++	router := clientDeviceID("unknown", "router-pass")
++	laptop := clientDeviceID("", "laptop-pass")
++	if router == laptop {
++		t.Fatalf("two passwords without a device id share %q", router)
++	}
++	// MaxDevices 0 = одно устройство: без переписанной привязки будет device_mismatch.
++	if !db.Passwords["router-pass"].canConnectAndBind(router) {
++		t.Fatal("router password refuses its own legacy client after migration")
++	}
++	if !db.Passwords["laptop-pass"].canConnectAndBind(laptop) {
++		t.Fatal("laptop password refuses its own legacy client after migration")
++	}
++	if got := clientDeviceID("phone-1", "phone-pass"); got != "phone-1" {
++		t.Fatalf("real device id rewritten to %q", got)
++	}
++}
+diff --git a/server/raw.go b/server/raw.go
+index 184ec43..c8be4d6 100644
+--- a/server/raw.go
++++ b/server/raw.go
+@@ -348,6 +348,7 @@ func handleConnRaw(ctx context.Context, clientConn net.Conn, router *rawRouter)
+ 	if len(parts) > 1 {
+ 		password = parts[1]
+ 	}
++	deviceID = clientDeviceID(deviceID, password)
+ 	if !connectionCredentialMatches(clientConn, password) {
+ 		clientConn.Write([]byte("DENIED:wrong_password"))
+ 		return
