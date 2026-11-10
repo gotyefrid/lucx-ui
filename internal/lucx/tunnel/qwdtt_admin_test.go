@@ -27,6 +27,7 @@ func TestNormalizeVkHashes(t *testing.T) {
 		" a , b ,, a ":          "a,b",
 		"a\nb;c d":              "a,b,c,d",
 		"abc-DEF_1,abc-DEF_1,x": "abc-DEF_1,x",
+		"https://vk.com/call/join/AbC_1?x=1\nhttps://vk.ru/call/join/Zz-2": "AbC_1,Zz-2",
 	}
 	for in, want := range cases {
 		if got := NormalizeVkHashes(in); got != want {

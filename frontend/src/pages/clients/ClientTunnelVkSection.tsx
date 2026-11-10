@@ -44,6 +44,18 @@ interface Props {
 }
 
 const VK_PROTOCOLS = new Set(['qwdtt', 'csqtt']);
+const PROTOCOL_LABELS: Record<string, string> = {
+  qwdtt: 'qWDTT',
+  csqtt: 'CSQTT',
+  vkturn: 'VK TURN (iOS)',
+};
+
+function statusText(m: TunnelMemberStatus, t: (key: string) => string): string {
+  if (m.protocol === 'vkturn') {
+    return m.ready ? t('pages.clients.tunnelVkturnReady') : t('pages.clients.tunnelVkturnNotReady');
+  }
+  return m.ready ? t('pages.clients.tunnelMemberReady') : t('pages.clients.tunnelMemberPending');
+}
 
 function clientVkUrl(email: string): string {
   return `/panel/api/tunnel/clientVk/${encodeURIComponent(email)}`;
@@ -56,14 +68,16 @@ export default function ClientTunnelVkSection({ ref, open, email, inbounds, inbo
   const [initial, setInitial] = useState('');
   const [members, setMembers] = useState<TunnelMemberStatus[]>([]);
 
-  const visible = useMemo(
-    () =>
-      (inboundIds || []).some((id) => {
-        const ib = (inbounds || []).find((row) => row.id === id);
-        return !!ib && VK_PROTOCOLS.has(ib.protocol ?? '');
-      }),
-    [inboundIds, inbounds],
-  );
+  // WireGuard-инбаунд тоже: его клиенты получают vkturnproxy://, если в
+  // панели есть релей VK TURN.
+  const visible = useMemo(() => {
+    const hasRelay = (inbounds || []).some((row) => row.protocol === 'vkturn');
+    return (inboundIds || []).some((id) => {
+      const ib = (inbounds || []).find((row) => row.id === id);
+      if (!ib) return false;
+      return VK_PROTOCOLS.has(ib.protocol ?? '') || (hasRelay && ib.protocol === 'wireguard');
+    });
+  }, [inboundIds, inbounds]);
 
   // Сброс при открытии делаем во время рендера, эффект только грузит данные.
   const openKey = open ? email : null;
@@ -125,12 +139,12 @@ export default function ClientTunnelVkSection({ ref, open, email, inbounds, inbo
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {members.map((m) => (
             <Typography.Text key={m.inboundId} type={m.ready && !m.error ? undefined : 'warning'}>
-              <Tag color={m.ready ? 'green' : 'orange'}>{m.protocol}</Tag>
+              <Tag color={m.ready ? 'green' : 'orange'}>
+                {PROTOCOL_LABELS[m.protocol] ?? m.protocol}
+              </Tag>
               {m.remark || `#${m.inboundId}`}
               {': '}
-              {m.ready
-                ? t('pages.clients.tunnelMemberReady')
-                : t('pages.clients.tunnelMemberPending')}
+              {statusText(m, t)}
               {m.error ? ` — ${m.error}` : ''}
             </Typography.Text>
           ))}

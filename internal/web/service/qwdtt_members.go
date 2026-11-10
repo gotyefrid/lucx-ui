@@ -438,5 +438,42 @@ func ClientTunnelStatus(email string) []TunnelMemberStatus {
 		}
 		out = append(out, st)
 	}
+	return append(out, clientVkturnStatus(email)...)
+}
+
+// clientVkturnStatus — релеи VK TURN, через которые клиент получает
+// vkturnproxy:// (он прикреплён к их WireGuard-инбаунду).
+func clientVkturnStatus(email string) []TunnelMemberStatus {
+	var relays []*model.Inbound
+	if err := database.GetDB().Where("protocol = ?", model.Vkturn).Find(&relays).Error; err != nil {
+		return nil
+	}
+	var out []TunnelMemberStatus
+	for _, relay := range relays {
+		cfg, ok := tunnel.VkturnConfigFromInbound(relay)
+		if !ok || cfg.WgInboundId <= 0 {
+			continue
+		}
+		attached, err := (&ClientService{}).ListForInbound(nil, cfg.WgInboundId)
+		if err != nil {
+			continue
+		}
+		for _, c := range attached {
+			if c.Email != email {
+				continue
+			}
+			st := TunnelMemberStatus{InboundId: relay.Id, Remark: relay.Remark, Protocol: string(model.Vkturn), Ready: true}
+			switch {
+			case !relay.Enable:
+				st.Ready, st.Error = false, "relay inbound is disabled"
+			case EffectiveVkHashes(email, cfg.VkHashes) == "":
+				st.Ready, st.Error = false, "no VK hashes: set them on the client or the relay"
+			case c.PrivateKey == "":
+				st.Ready, st.Error = false, "client has no WireGuard private key"
+			}
+			out = append(out, st)
+			break
+		}
+	}
 	return out
 }

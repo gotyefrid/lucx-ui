@@ -356,6 +356,10 @@ func NormalizeVkHashes(raw string) string {
 	seen := make(map[string]struct{}, len(fields))
 	out := make([]string, 0, len(fields))
 	for _, f := range fields {
+		f = vkHashFromLink(f)
+		if f == "" {
+			continue
+		}
 		if _, dup := seen[f]; dup {
 			continue
 		}
@@ -363,6 +367,20 @@ func NormalizeVkHashes(raw string) string {
 		out = append(out, f)
 	}
 	return strings.Join(out, ",")
+}
+
+// vkHashFromLink вырезает хеш из ссылки на звонок
+// (https://vk.com/call/join/<hash>?…); голый хеш возвращает как есть.
+func vkHashFromLink(token string) string {
+	i := strings.Index(token, "/join/")
+	if i < 0 || !strings.Contains(token, "://") {
+		return token
+	}
+	h := token[i+len("/join/"):]
+	if j := strings.IndexAny(h, "?#/"); j >= 0 {
+		h = h[:j]
+	}
+	return h
 }
 
 // QwdttSubProfile is one profile inside a qWDTT subscription JSON document.
