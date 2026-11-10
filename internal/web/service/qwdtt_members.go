@@ -88,17 +88,53 @@ func EffectiveVkHashes(email, inboundHashes string) string {
 	return tunnel.NormalizeVkHashes(inboundHashes)
 }
 
+// NormalizeClientVkHashes приводит хеши и ссылки на звонки к виду "h1,h2" и проверяет их.
+func NormalizeClientVkHashes(hashes string) (string, error) {
+	hashes = tunnel.NormalizeVkHashes(hashes)
+	for _, h := range strings.Split(hashes, ",") {
+		if h != "" && !vkHashRe.MatchString(h) {
+			return "", fmt.Errorf("invalid VK hash %q: only letters, digits, '-' and '_'", h)
+		}
+	}
+	return hashes, nil
+}
+
+// InboundsTakeClientVk — нужен ли клиенту этих инбаундов свой VK-хеш: qWDTT,
+// CSQTT или WireGuard-инбаунд, на который смотрит релей VK TURN.
+func InboundsTakeClientVk(inboundIDs []int) bool {
+	if len(inboundIDs) == 0 {
+		return false
+	}
+	var inbounds []*model.Inbound
+	if err := database.GetDB().Where("id IN ? OR protocol = ?", inboundIDs, model.Vkturn).Find(&inbounds).Error; err != nil {
+		return false
+	}
+	chosen := make(map[int]bool, len(inboundIDs))
+	for _, id := range inboundIDs {
+		chosen[id] = true
+	}
+	for _, ib := range inbounds {
+		switch {
+		case chosen[ib.Id] && (ib.Protocol == model.Qwdtt || ib.Protocol == model.Csqtt):
+			return true
+		case ib.Protocol == model.Vkturn:
+			if cfg, ok := tunnel.VkturnConfigFromInbound(ib); ok && chosen[cfg.WgInboundId] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // SetClientVkHashes сохраняет индивидуальные VK-хеши клиента (пусто = сброс).
 func SetClientVkHashes(email, hashes string) error {
 	email = strings.TrimSpace(email)
 	if email == "" {
 		return errors.New("client email is empty")
 	}
-	hashes = tunnel.NormalizeVkHashes(hashes)
-	for _, h := range strings.Split(hashes, ",") {
-		if h != "" && !vkHashRe.MatchString(h) {
-			return fmt.Errorf("invalid VK hash %q: only letters, digits, '-' and '_'", h)
-		}
+	hashes, err := NormalizeClientVkHashes(hashes)
+	if err != nil {
+		return err
 	}
 	if hashes == "" {
 		return database.GetDB().Where("client_email = ?", email).Delete(&model.TunnelClientVk{}).Error

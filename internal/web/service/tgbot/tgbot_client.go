@@ -77,6 +77,9 @@ func (t *Tgbot) BuildClientDraftMessage(draft *clientDraft) string {
 	fmt.Fprintf(&b, "🔢 IP limit: %s\r\n", ipLimit)
 	fmt.Fprintf(&b, "👤 TG user: %s\r\n", html.EscapeString(tgID))
 	fmt.Fprintf(&b, "💬 Comment: %s\r\n", html.EscapeString(comment))
+	// LUCX-HOOK: VK-хеши звонка (tgbot_lucx_vk.go)
+	b.WriteString(t.vkDraftLine(draft))
+	// END LUCX-HOOK
 	return b.String()
 }
 
@@ -128,10 +131,16 @@ func (t *Tgbot) SubmitAddClient(draft *clientDraft) (bool, error) {
 		TgID:       tgIDInt,
 	}
 
-	return t.clientService.Create(&t.inboundService, &service.ClientCreatePayload{
+	// LUCX-HOOK: VK-хеши сохраняются только после создания клиента (tgbot_lucx_vk.go)
+	needRestart, err := t.clientService.Create(&t.inboundService, &service.ClientCreatePayload{
 		Client:     client,
 		InboundIds: inboundIDs,
 	})
+	if err == nil {
+		applyDraftVkHashes(draft)
+	}
+	return needRestart, err
+	// END LUCX-HOOK
 }
 
 // buildSubscriptionURLs builds the HTML sub page URL and JSON subscription URL for a client email
@@ -425,7 +434,7 @@ func (t *Tgbot) getClientUsage(chatId int64, tgUserID int64, email ...string) {
 func (t *Tgbot) getCommonClientButtons(draft *clientDraft) [][]telego.InlineKeyboardButton {
 	attachLabel := t.I18nBot("tgbot.buttons.attachInbound",
 		"Count=="+strconv.Itoa(len(draft.receiverInboundIDs)))
-	return [][]telego.InlineKeyboardButton{
+	rows := [][]telego.InlineKeyboardButton{ // LUCX-HOOK: rows вместо return, ниже вставка VK
 		tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.change_email")).WithCallbackData("add_client_ch_default_email"),
 			tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.change_comment")).WithCallbackData("add_client_ch_default_comment"),
@@ -449,6 +458,9 @@ func (t *Tgbot) getCommonClientButtons(draft *clientDraft) [][]telego.InlineKeyb
 			tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.cancel")).WithCallbackData("add_client_cancel"),
 		),
 	}
+	// LUCX-HOOK: кнопка VK-хешей перед выбором инбаундов (tgbot_lucx_vk.go)
+	return slices.Insert(rows, 3, t.vkDraftRows(draft)...)
+	// END LUCX-HOOK
 }
 
 // addClient renders the draft as the chat's screen: the wizard keeps ONE

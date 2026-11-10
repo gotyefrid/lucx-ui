@@ -125,7 +125,7 @@ func (t *Tgbot) searchClientScreen(chatID int64, email string) {
 // clientRows is the client card's keyboard, in one place so every entry point
 // draws an identical card.
 func (t *Tgbot) clientRows(email string) [][]telego.InlineKeyboardButton {
-	return [][]telego.InlineKeyboardButton{
+	rows := [][]telego.InlineKeyboardButton{ // LUCX-HOOK: rows вместо return, ниже вставка VK
 		tu.InlineKeyboardRow(t.btn("tgbot.buttons.refresh", t.encodeQuery("client_refresh "+email))),
 		// LUCX-HOOK: subscription/individual links and QR; the QR label also
 		// covers the AWG .conf download (#198).
@@ -150,4 +150,7 @@ func (t *Tgbot) clientRows(email string) [][]telego.InlineKeyboardButton {
 		tu.InlineKeyboardRow(t.btn("tgbot.buttons.toggle", t.encodeQuery("toggle_enable "+email))),
 		t.backRow(),
 	}
+	// LUCX-HOOK: смена VK-хешей звонка у клиента wdtt/CSQTT/iOS (tgbot_lucx_vk.go)
+	return insertKeyboardRows(rows, 2, t.clientVkRows(email))
+	// END LUCX-HOOK
 }

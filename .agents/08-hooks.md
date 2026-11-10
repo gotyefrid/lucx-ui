@@ -107,6 +107,7 @@ i18n: extra keys in all 14 `internal/web/translation/*.json` have **no** HOOK. D
 | `internal/web/service/panel/panel.go` + `panel_test.go` | release notes / version |
 | `internal/web/service/panel/sponsor.go` | fork sponsor list URL (`AlexeyLCP/lucx-ui` raw) |
 | `internal/web/service/tgbot/tgbot_client.go` + `tgbot_send.go` | lucx bot |
+| `internal/web/service/tgbot/tgbot.go` `tgbot_client.go` `tgbot_router.go` `screen_legacy.go` | per-client VK call hashes (tgbot_lucx_vk.go): draft field + wizard button (only when `service.InboundsTakeClientVk` — qWDTT, CSQTT or the WG inbound behind a VK TURN relay), stored after `Create` (the member sync sweeps hashes of not-yet-existing emails), client-card `client_vk` action for wdtt/CSQTT/iOS clients |
 
 ### Frontend (HOOK)
 

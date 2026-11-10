@@ -91,6 +91,9 @@ type clientDraft struct {
 	subID              string
 	comment            string
 	reset              int
+	// LUCX-HOOK: VK-хеши звонка клиента wdtt/CSQTT/iOS (tgbot_lucx_vk.go)
+	vkHashes string
+	// END LUCX-HOOK
 }
 
 // chatUser names the admin a wizard belongs to. A private chat's ids are equal;

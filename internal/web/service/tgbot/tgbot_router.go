@@ -160,6 +160,11 @@ func (t *Tgbot) OnReceive() {
 					t.handleBroadcastInput(&message, actor)
 					return nil
 				}
+				// LUCX-HOOK: ответ на запрос VK-хешей с карточки клиента (tgbot_lucx_vk.go)
+				if t.handleClientVkInput(&message, actor, userState) {
+					return nil
+				}
+				// END LUCX-HOOK
 				// Only a wizard step touches the draft, so only it takes the lock.
 				draft := addClientDrafts.forActor(actor)
 				draft.Lock()
@@ -182,6 +187,10 @@ func (t *Tgbot) OnReceive() {
 						userStateMgr.clear(actor)
 						t.addClient(message.Chat.ID, draft, t.BuildClientDraftMessage(draft))
 					}
+				// LUCX-HOOK: VK-хеши звонка в мастере (tgbot_lucx_vk.go)
+				case draftVkAwaiting:
+					t.handleDraftVkInput(&message, actor, draft)
+				// END LUCX-HOOK
 				case "awaiting_comment":
 					if draft.comment == strings.TrimSpace(message.Text) {
 						t.deleteIncoming(&message)
@@ -423,6 +432,11 @@ func (t *Tgbot) answerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 			case "client_get_usage":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.messages.email", "Email=="+email))
 				t.searchClientScreen(chatId, email)
+			// LUCX-HOOK: VK-хеши звонка клиента (tgbot_lucx_vk.go)
+			case "client_vk":
+				t.answerSilent(callbackQuery.ID)
+				t.promptClientVk(chatId, actor, email)
+			// END LUCX-HOOK
 			case "client_refresh":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.clientRefreshSuccess", "Email=="+email))
 				t.searchClientScreen(chatId, email)
@@ -1041,6 +1055,10 @@ func (t *Tgbot) answerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 			current = "—"
 		}
 		t.wizardPrompt(chatId, draft, t.I18nBot("tgbot.messages.tgid_prompt", "ClientTGID=="+html.EscapeString(current)))
+	// LUCX-HOOK: VK-хеши звонка в мастере (tgbot_lucx_vk.go)
+	case "add_client_ch_default_vk":
+		t.promptDraftVk(chatId, actor, draft)
+	// END LUCX-HOOK
 	case "add_client_ch_default_traffic":
 		inlineKeyboard := tu.InlineKeyboard(
 			tu.InlineKeyboardRow(
