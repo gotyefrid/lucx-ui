@@ -65,6 +65,7 @@ export const keys = {
     aivpnStatus: () => ['tunnels', 'aivpnStatus'] as const,
     aivpnClients: (inboundId: number) => ['tunnels', 'aivpnClients', String(inboundId)] as const,
     openfluxStatus: () => ['tunnels', 'openfluxStatus'] as const,
+    vkturnStatus: () => ['tunnels', 'vkturnStatus'] as const, // LUCX-HOOK: VK TURN (iOS)
     mieruStatus: () => ['tunnels', 'mieruStatus'] as const,
     trustTunnelStatus: () => ['tunnels', 'trustTunnelStatus'] as const,
     anytlsStatus: () => ['tunnels', 'anytlsStatus'] as const,

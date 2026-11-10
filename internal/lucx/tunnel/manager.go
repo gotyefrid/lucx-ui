@@ -408,6 +408,8 @@ func removeManagedFiles(key string) {
 		core = Olcrtc
 	case strings.HasPrefix(key, "openflux-"):
 		core = Openflux
+	case strings.HasPrefix(key, "vkturn-"):
+		core = Vkturn
 	default:
 		return
 	}
@@ -455,7 +457,7 @@ func workDirFilesForSingleInstanceKey(key string) []string {
 }
 
 func isMultiInstanceKey(key string) bool {
-	for _, p := range []string{"trusttunnel-", "mieru-", "naive-", "olcrtc-", "openflux-", "anytls-", "tproxycaddy-", "cover-", "tproxy-", "mtproxy-", "naiveout-", "mieruout-", "ttout-"} {
+	for _, p := range []string{"trusttunnel-", "mieru-", "naive-", "olcrtc-", "openflux-", "vkturn-", "anytls-", "tproxycaddy-", "cover-", "tproxy-", "mtproxy-", "naiveout-", "mieruout-", "ttout-"} {
 		if strings.HasPrefix(key, p) && len(key) > len(p) {
 			return true
 		}
@@ -731,6 +733,11 @@ func (m *Manager) ReconcileOlcrtc(want []Instance) {
 
 func (m *Manager) ReconcileOpenflux(want []Instance) {
 	m.ReconcileWanted(Openflux, "openflux-", string(Openflux), want)
+}
+
+// ReconcileVkturn запускает/останавливает релеи VK TURN (iOS).
+func (m *Manager) ReconcileVkturn(want []Instance) {
+	m.ReconcileWanted(Vkturn, "vkturn-", string(Vkturn), want)
 }
 
 // ReconcileMieru drives every desired mieru inbound instance.

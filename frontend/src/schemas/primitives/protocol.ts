@@ -28,6 +28,7 @@ export const ProtocolSchema = z.enum([
   'anytls', // LUCX-HOOK: AnyTLS sidecar
   'wgosocks', // LUCX-HOOK: wgobfs SOCKS5-exit sidecar
   'tproxy', // LUCX-HOOK: Telegram WEB proxy
+  'vkturn', // LUCX-HOOK: VK TURN relay for the iOS app
   'cover', // LUCX-HOOK: camouflage site on :80/:443
   'gateway', // LUCX-HOOK: nginx SNI mux,
   'masque',
@@ -68,6 +69,7 @@ export const Protocols = Object.freeze({
   ANYTLS: 'anytls', // LUCX-HOOK: AnyTLS
   Wgosocks: 'wgosocks', // LUCX-HOOK: wgobfs SOCKS5-exit
   TPROXY: 'tproxy', // LUCX-HOOK: Telegram WEB proxy
+  VKTURN: 'vkturn', // LUCX-HOOK: VK TURN (iOS)
   COVER: 'cover', // LUCX-HOOK: camouflage site
   GATEWAY: 'gateway', // LUCX-HOOK: nginx SNI mux,
   MASQUE: 'masque',

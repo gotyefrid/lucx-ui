@@ -1121,6 +1121,16 @@
         "trustTunnelClientRandomPrefixRegen": "Yenile",
         "csqttSingleNote": "One CSQTT inbound per host — a second one will not start. One password = one device. Upload the binary on Settings → Cores. Clients: CSQTT Android APK or iOS anton48 (CSQTT mode, not WRAP-A).",
         "openfluxNote": "OpenFlux exit (l4). One link, one active client. New user = new inbound (own port and carrier URL). Direct uses this inbound port. Paste a Yandex, Mail.ru or Cups URL for an extra carrier. Upload the binary on Settings → Cores.",
+        "vkturnNote": "Relay for the iOS app vk-turn-proxy-ios (anton48, SRTP mode). It forwards VK TURN sessions into the chosen WireGuard inbound: every client of that inbound gets a vkturnproxy:// link next to its WireGuard config. The port must be open for UDP.",
+        "vkturnWgInbound": "WireGuard inbound",
+        "vkturnWgInboundHint": "Local Xray WireGuard inbound the relay forwards to (127.0.0.1:<its port>). Its clients are the relay's clients.",
+        "vkturnWgInboundPlaceholder": "Choose a WireGuard inbound",
+        "vkturnNoWgInbound": "Create a WireGuard inbound first",
+        "vkturnSubHost": "Public host (for clients)",
+        "vkturnSubHostHint": "IP or domain clients connect to, without port. Empty = the panel address.",
+        "vkturnVkHashesHint": "Comma-separated VK call hashes for clients without their own hashes.",
+        "vkturnNumConnections": "TURN connections",
+        "vkturnNumConnectionsHint": "Parallel TURN allocations in the app (1..50, default 30).",
         "openfluxShareHost": "Public host",
         "openfluxShareHostHint": "Address clients dial for direct. Empty uses the subscription host.",
         "openfluxYandexUrl": "Yandex document URL",
@@ -3525,6 +3535,13 @@
       },
       "inboundMovedTitle": "Configuration is in Inbounds",
       "inboundMovedDesc": "Add and edit NaiveProxy, olcRTC and qWDTT as Inbounds. This page is only for binaries, process logs and rare advanced ops.",
+      "vkturn": {
+        "toasts": {
+          "uploaded": "VK TURN relay binary uploaded",
+          "downloaded": "VK TURN relay binary downloaded",
+          "deleted": "VK TURN relay binary deleted"
+        }
+      },
       "openflux": {
         "toasts": {
           "uploaded": "OpenFlux binary uploaded",

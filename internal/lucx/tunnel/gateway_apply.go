@@ -215,7 +215,7 @@ func ClassifyInbound(ib *model.Inbound) Classified {
 	case model.Openflux:
 		return Classified{Note: "own TCP port — not an SNI backend"}
 	case model.AWG, model.AmneziaWG, model.WireGuard, model.Hysteria, model.TUIC,
-		model.Olcrtc, model.Qwdtt, model.Csqtt, model.Masterdns:
+		model.Olcrtc, model.Qwdtt, model.Csqtt, model.Masterdns, model.Vkturn:
 		return Classified{Note: "UDP — not behind the site"}
 	case model.Gateway, model.Mieru, model.MTProto, model.Tunnel:
 		return Classified{}

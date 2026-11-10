@@ -68,6 +68,7 @@ const CSQTT = '/panel/api/tunnel/csqtt';
 const MASTERDNS = '/panel/api/tunnel/masterdns';
 const AIVPN = '/panel/api/tunnel/aivpn';
 const OPENFLUX = '/panel/api/tunnel/openflux';
+const VKTURN = '/panel/api/tunnel/vkturn'; // LUCX-HOOK: VK TURN (iOS)
 const MIERU = '/panel/api/tunnel/mieru';
 const TRUSTTUNNEL = '/panel/api/tunnel/trusttunnel';
 const ANYTLS = '/panel/api/tunnel/anytls';
@@ -249,6 +250,25 @@ export const tunnelsApi = {
   },
   openfluxDeleteBinary: (): Promise<Msg<null>> =>
     HttpUtil.post<null>(`${OPENFLUX}/deleteBinary`, {}, JSON_HEADERS),
+
+  // LUCX-HOOK: VK TURN (iOS) — та же форма статуса, что у OpenFlux.
+  vkturnStatus: async (): Promise<Msg<OpenfluxStatus>> => {
+    const raw = await HttpUtil.get<OpenfluxStatus>(`${VKTURN}/status`, undefined, {
+      silent: true,
+    });
+    return parseMsg(raw, OpenfluxStatusSchema, 'tunnel/vkturnStatus');
+  },
+  vkturnLogs: (lines = 200): Promise<Msg<string[]>> =>
+    HttpUtil.get<string[]>(`${VKTURN}/logs?lines=${lines}`),
+  vkturnDownload: (url: string, sha256?: string): Promise<Msg<null>> =>
+    HttpUtil.post<null>(`${VKTURN}/download`, { url, sha256 }, JSON_HEADERS),
+  vkturnUpload: (file: File): Promise<Msg<null>> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return HttpUtil.post<null>(`${VKTURN}/upload`, fd);
+  },
+  vkturnDeleteBinary: (): Promise<Msg<null>> =>
+    HttpUtil.post<null>(`${VKTURN}/deleteBinary`, {}, JSON_HEADERS),
 
   mieruStatus: async (): Promise<Msg<MieruStatus>> => {
     const raw = await HttpUtil.get<MieruStatus>(`${MIERU}/status`, undefined, { silent: true });

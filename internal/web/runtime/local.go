@@ -127,6 +127,9 @@ func (l *Local) AddInbound(_ context.Context, ib *model.Inbound) error {
 	if ib.Protocol == model.Openflux {
 		return l.ensureOpenfluxInbound(ib)
 	}
+	if ib.Protocol == model.Vkturn {
+		return l.ensureVkturnInbound(ib)
+	}
 	if ib.Protocol == model.Mieru {
 		return l.ensureMieruInbound(ib)
 	}
@@ -225,6 +228,10 @@ func (l *Local) DelInbound(_ context.Context, ib *model.Inbound) error {
 	}
 	if ib.Protocol == model.Openflux {
 		tunnel.GetManager().Remove(tunnel.OpenfluxKey(ib.Id))
+		return nil
+	}
+	if ib.Protocol == model.Vkturn {
+		tunnel.GetManager().Remove(tunnel.VkturnKey(ib.Id))
 		return nil
 	}
 	if ib.Protocol == model.Mieru {
@@ -343,7 +350,7 @@ func (l *Local) UpdateInbound(ctx context.Context, oldIb, newIb *model.Inbound) 
 }
 
 func isTunnelInboundProto(p model.Protocol) bool {
-	return p == model.Naive || p == model.Olcrtc || p == model.Qwdtt || p == model.Csqtt || p == model.Masterdns || p == model.Aivpn || p == model.Openflux || p == model.Mieru || p == model.TrustTunnel || p == model.Anytls || p == model.Tproxy || p == model.Cover || p == model.Gateway || p == model.Telemt
+	return p == model.Naive || p == model.Olcrtc || p == model.Qwdtt || p == model.Csqtt || p == model.Masterdns || p == model.Aivpn || p == model.Openflux || p == model.Vkturn || p == model.Mieru || p == model.TrustTunnel || p == model.Anytls || p == model.Tproxy || p == model.Cover || p == model.Gateway || p == model.Telemt
 }
 
 // tunnelUpdateDropsRunning reports whether an update must stop the old sidecar
@@ -419,6 +426,27 @@ func (l *Local) ensureOpenfluxInbound(ib *model.Inbound) error {
 		return nil
 	}
 	return tunnel.GetManager().Ensure(inst)
+}
+
+func (l *Local) ensureVkturnInbound(ib *model.Inbound) error {
+	inst, ok := tunnel.VkturnInstanceFromInbound(ib, VkturnTarget(ib))
+	if !ok {
+		return nil
+	}
+	return tunnel.GetManager().Ensure(inst)
+}
+
+// VkturnTarget читает WireGuard-инбаунд, в который смотрит релей vkturn.
+func VkturnTarget(ib *model.Inbound) *model.Inbound {
+	cfg, ok := tunnel.VkturnConfigFromInbound(ib)
+	if !ok || cfg.WgInboundId <= 0 {
+		return nil
+	}
+	var wg model.Inbound
+	if err := database.GetDB().First(&wg, cfg.WgInboundId).Error; err != nil {
+		return nil
+	}
+	return &wg
 }
 
 func (l *Local) ensureMieruInbound(ib *model.Inbound) error {

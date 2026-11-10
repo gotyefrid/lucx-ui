@@ -76,6 +76,9 @@ const (
 	// ClusterM wg-obfuscator, GPL-3.0 external process): multi-client
 	// login/password (RFC 1929), masking MEDIA/TLS/AUTO/NONE over TCP.
 	Wgosocks Protocol = "wgosocks"
+	// Vkturn — релей anton48/vk-turn-proxy (SRTP) перед WireGuard-инбаундом
+	// для iOS-приложения vk-turn-proxy-ios; клиенты — пиры этого WG-инбаунда.
+	Vkturn Protocol = "vkturn"
 	// END LUCX-HOOK
 	MASQUE Protocol = "masque"
 )
@@ -109,7 +112,7 @@ type Inbound struct {
 	// Xray configuration fields
 	Listen            string   `json:"listen" form:"listen"`
 	Port              int      `json:"port" form:"port" validate:"gte=0,lte=65535" example:"443"`
-	Protocol          Protocol `json:"protocol" form:"protocol" validate:"required,oneof=vmess vless trojan shadowsocks wireguard hysteria http mixed tunnel tun mtproto telemt amneziawg tuic masque awg naive olcrtc qwdtt csqtt masterdns aivpn openflux mieru trusttunnel anytls tproxy cover gateway wgosocks" example:"vless"`
+	Protocol          Protocol `json:"protocol" form:"protocol" validate:"required,oneof=vmess vless trojan shadowsocks wireguard hysteria http mixed tunnel tun mtproto telemt amneziawg tuic masque awg naive olcrtc qwdtt csqtt masterdns aivpn openflux mieru trusttunnel anytls tproxy cover gateway wgosocks vkturn" example:"vless"`
 	Settings          string   `json:"settings" form:"settings"`
 	StreamSettings    string   `json:"streamSettings" form:"streamSettings"`
 	Tag               string   `json:"tag" form:"tag" gorm:"unique" example:"in-443-tcp"`

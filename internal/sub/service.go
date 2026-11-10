@@ -651,6 +651,10 @@ func (s *SubService) inboundLinks(inbound *model.Inbound) []string {
 	// LUCX-HOOK: AnyTls is single-credential unless its server takes one
 	// password per client.
 	anytlsShared := inbound != nil && inbound.Protocol == model.Anytls && (inbound.NodeID != nil || !tunnel.AnytlsSupportsUsers())
+	// LUCX-HOOK: релей VK TURN — ссылки всех клиентов его WireGuard-инбаунда.
+	if inbound != nil && inbound.Protocol == model.Vkturn {
+		return s.vkturnInboundLinks(inbound)
+	}
 	// qWDTT в режиме perClient экспортирует ссылки каждого клиента.
 	qwdttShared := inbound != nil && inbound.Protocol == model.Qwdtt
 	if qwdttShared && inbound.NodeID == nil {
@@ -994,7 +998,18 @@ func (s *SubService) GetLink(inbound *model.Inbound, email string) string {
 	case "telemt":
 		return s.genTelemtLink(inbound, email)
 	case "wireguard":
-		return s.genWireguardLink(inbound, email)
+		// LUCX-HOOK: iOS-ссылка vkturnproxy:// клиента через релей VK TURN —
+		// только в панели и на странице подписки, не в теле /sub.
+		if link := s.genWireguardLink(inbound, email); s.subscriptionBody {
+			return link
+		} else if extra := s.vkturnLinks(inbound, email); len(extra) > 0 {
+			return strings.Join(append([]string{link}, extra...), "\n")
+		} else {
+			return link
+		}
+		// END LUCX-HOOK
+	case "vkturn": // LUCX-HOOK: у релея нет своих клиентов — ссылки идут с WG-инбаунда
+		return ""
 	case "awg": // LUCX-HOOK: AWG share link
 		return s.genAwgLink(inbound, email)
 	case "naive": // LUCX-HOOK: NaiveProxy inbound share link

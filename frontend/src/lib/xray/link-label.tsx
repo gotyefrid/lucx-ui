@@ -41,6 +41,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   masterdns: 'MasterDnsVPN', // LUCX-HOOK: masterdns:// client-config wrapper
   aivpn: 'AIVPN', // LUCX-HOOK: aivpn:// connection key
   openflux: 'OpenFlux',
+  vkturnproxy: 'VK TURN (iOS)', // LUCX-HOOK: vkturnproxy:// (anton48)
   wdtt: 'WDTT', // LUCX-HOOK: классическая wdtt:// (отдельная метка от qwdtt://)
   mieru: 'mieru',
   mierus: 'mieru',
@@ -65,6 +66,7 @@ const PROTOCOL_COLORS: Record<string, string> = {
   olcRTC: 'cyan',
   qWDTT: 'gold',
   WDTT: 'lime', // LUCX-HOOK
+  'VK TURN (iOS)': 'blue', // LUCX-HOOK
   MasterDnsVPN: 'green', // LUCX-HOOK: masterdns://
   mieru: 'geekblue',
   TrustTunnel: 'purple',

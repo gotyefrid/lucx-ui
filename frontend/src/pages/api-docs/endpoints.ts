@@ -1468,6 +1468,35 @@ export const sections: readonly Section[] = [
       },
       {
         method: 'GET',
+        path: '/panel/api/tunnel/vkturn/status',
+        summary:
+          'VK TURN (iOS) relay core status for the Cores page: anton48 vk-turn-proxy SRTP server binary and process state. LucX-UI only.',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tunnel/vkturn/logs',
+        summary: 'Recent VK TURN relay log lines (?lines=N, default 200). LucX-UI only.',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnel/vkturn/upload',
+        summary:
+          'Replace the VK TURN relay binary (multipart field "file", ELF only). LucX-UI only.',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnel/vkturn/download',
+        summary:
+          'Download the VK TURN relay binary from a URL, optionally checking its SHA-256. LucX-UI only.',
+        body: '{\n  "url": "https://example.com/vkturn-linux-amd64",\n  "sha256": ""\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnel/vkturn/deleteBinary',
+        summary: 'Stop VK TURN relay processes and remove the binary. LucX-UI only.',
+      },
+      {
+        method: 'GET',
         path: '/panel/api/tunnel/mieru/status',
         summary:
           'mieru core status for the Cores page: binary presence and aggregate process state across all mieru-{id} inbound sidecars. Inbound-only core — no legacy config/lifecycle. LucX-UI only.',

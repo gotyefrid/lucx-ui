@@ -93,6 +93,7 @@ export const PALETTE_KEYWORDS: Record<string, string[]> = {
     'aivpn',
     'openflux',
     'trusttunnel',
+    'vkturn',
   ],
   '/masking': ['masking', 'tproxy', 'cover', 'webproxy', 'sni'],
   // LUCX-HOOK: scanner guard palette entry

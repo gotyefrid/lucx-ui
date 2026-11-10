@@ -103,6 +103,7 @@ export function canEnableSniffing(values: { protocol: string }): boolean {
     values.protocol !== 'masterdns' &&
     values.protocol !== 'aivpn' &&
     values.protocol !== 'openflux' &&
+    values.protocol !== 'vkturn' &&
     values.protocol !== 'mieru' &&
     values.protocol !== 'trusttunnel' &&
     values.protocol !== 'anytls' &&

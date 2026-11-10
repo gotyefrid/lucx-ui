@@ -3374,7 +3374,8 @@
               "tproxy",
               "cover",
               "gateway",
-              "wgosocks"
+              "wgosocks",
+              "vkturn"
             ],
             "example": "vless",
             "type": "string"
@@ -11064,6 +11065,170 @@
         ],
         "summary": "Stop OpenFlux processes and remove the binary. LucX-UI only.",
         "operationId": "post_panel_api_tunnel_openflux_deleteBinary",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnel/vkturn/status": {
+      "get": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "VK TURN (iOS) relay core status for the Cores page: anton48 vk-turn-proxy SRTP server binary and process state. LucX-UI only.",
+        "operationId": "get_panel_api_tunnel_vkturn_status",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnel/vkturn/logs": {
+      "get": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Recent VK TURN relay log lines (?lines=N, default 200). LucX-UI only.",
+        "operationId": "get_panel_api_tunnel_vkturn_logs",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnel/vkturn/upload": {
+      "post": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Replace the VK TURN relay binary (multipart field \"file\", ELF only). LucX-UI only.",
+        "operationId": "post_panel_api_tunnel_vkturn_upload",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnel/vkturn/download": {
+      "post": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Download the VK TURN relay binary from a URL, optionally checking its SHA-256. LucX-UI only.",
+        "operationId": "post_panel_api_tunnel_vkturn_download",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "url": "https://example.com/vkturn-linux-amd64",
+                "sha256": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnel/vkturn/deleteBinary": {
+      "post": {
+        "tags": [
+          "Tunnel tools"
+        ],
+        "summary": "Stop VK TURN relay processes and remove the binary. LucX-UI only.",
+        "operationId": "post_panel_api_tunnel_vkturn_deleteBinary",
         "responses": {
           "200": {
             "description": "Successful response",

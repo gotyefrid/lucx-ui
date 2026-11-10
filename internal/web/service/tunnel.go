@@ -353,6 +353,7 @@ func (s *TunnelService) Reconcile() {
 	s.reconcileMasterdnsInbound()
 	s.reconcileAivpnInbound()
 	s.reconcileOpenfluxInbounds()
+	s.reconcileVkturnInbounds()
 	s.reconcileMieruInbounds()
 	s.reconcileTrustTunnelInbounds()
 	s.reconcileAnytlsInbounds()
@@ -562,6 +563,35 @@ func (s *TunnelService) reconcileOpenfluxInbounds() {
 		want = append(want, inst)
 	}
 	tunnel.GetManager().ReconcileOpenflux(want)
+}
+
+// reconcileVkturnInbounds держит релеи VK TURN (iOS) по инбаундам; аргументы
+// пересчитываются каждый тик, так что смена порта WG-инбаунда подхватится.
+func (s *TunnelService) reconcileVkturnInbounds() {
+	inbounds, err := s.inboundService.GetAllInbounds()
+	if err != nil {
+		logger.Warning("tunnel: vkturn inbound list failed:", err)
+		return
+	}
+	byID := make(map[int]*model.Inbound, len(inbounds))
+	for _, ib := range inbounds {
+		if ib != nil {
+			byID[ib.Id] = ib
+		}
+	}
+	var want []tunnel.Instance
+	for _, ib := range inbounds {
+		if ib == nil || ib.Protocol != model.Vkturn || ib.NodeID != nil {
+			continue
+		}
+		cfg, _ := tunnel.VkturnConfigFromInbound(ib)
+		inst, ok := tunnel.VkturnInstanceFromInbound(ib, byID[cfg.WgInboundId])
+		if !ok {
+			continue
+		}
+		want = append(want, inst)
+	}
+	tunnel.GetManager().ReconcileVkturn(want)
 }
 
 func (s *TunnelService) reconcileCsqttInbound() {
@@ -1780,6 +1810,26 @@ func (s *TunnelService) OpenfluxStatus() (MieruStatus, error) {
 		Probe:        tunnel.Status{Running: mgr.AnyRunning("openflux-")},
 		LastLog:      mgr.LastLogPrefixed("openflux-"),
 	}, nil
+}
+
+// VkturnStatus — состояние бинаря и процессов релея VK TURN (iOS).
+func (s *TunnelService) VkturnStatus() MieruStatus {
+	mgr := tunnel.GetManager()
+	bin := tunnel.Vkturn.BinaryPath()
+	info, statErr := os.Stat(bin)
+	return MieruStatus{
+		Core:         string(tunnel.Vkturn),
+		DisplayName:  tunnel.Vkturn.DisplayName(),
+		BinaryExists: statErr == nil && !info.IsDir(),
+		BinaryPath:   bin,
+		Probe:        tunnel.Status{Running: mgr.AnyRunning("vkturn-")},
+		LastLog:      mgr.LastLogPrefixed("vkturn-"),
+	}
+}
+
+// DownloadVkturnBinary скачивает бинарь релея по URL (с проверкой SHA-256).
+func (s *TunnelService) DownloadVkturnBinary(downloadURL, wantSHA256 string) error {
+	return s.downloadBinaryTo(tunnel.Vkturn.BinaryPath(), downloadURL, wantSHA256)
 }
 
 func (s *TunnelService) OpenfluxLogs(lines int) []string {

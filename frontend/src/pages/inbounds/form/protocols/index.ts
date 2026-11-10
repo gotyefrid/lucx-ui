@@ -15,6 +15,7 @@ export { default as CsqttFields } from './csqtt'; // LUCX-HOOK: CSQTT
 export { default as MasterdnsFields } from './masterdns'; // LUCX-HOOK: MasterDNSVPN
 export { default as AivpnFields } from './aivpn'; // LUCX-HOOK: AIVPN
 export { default as OpenfluxFields } from './openflux'; // LUCX-HOOK: OpenFlux
+export { default as VkturnFields } from './vkturn'; // LUCX-HOOK: VK TURN (iOS)
 export { default as MieruFields } from './mieru'; // LUCX-HOOK: mieru
 export { default as TrustTunnelFields } from './trusttunnel'; // LUCX-HOOK: TrustTunnel
 export { default as AnytlsFields } from './anytls'; // LUCX-HOOK: AnyTLS

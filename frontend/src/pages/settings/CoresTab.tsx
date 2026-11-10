@@ -43,6 +43,7 @@ type CoreKind =
   | 'masterdns'
   | 'aivpn'
   | 'openflux'
+  | 'vkturn'
   | 'mieru'
   | 'trusttunnel'
   | 'anytls'
@@ -129,6 +130,14 @@ const CORE_API: Record<
     upload: tunnelsApi.openfluxUpload,
     download: tunnelsApi.openfluxDownload,
     deleteBinary: tunnelsApi.openfluxDeleteBinary,
+  },
+  vkturn: {
+    key: keys.tunnels.vkturnStatus,
+    status: tunnelsApi.vkturnStatus,
+    logs: tunnelsApi.vkturnLogs,
+    upload: tunnelsApi.vkturnUpload,
+    download: tunnelsApi.vkturnDownload,
+    deleteBinary: tunnelsApi.vkturnDeleteBinary,
   },
   mieru: {
     key: keys.tunnels.mieruStatus,
@@ -604,6 +613,7 @@ export default function CoresTab() {
       <BinaryCard kind="masterdns" title="MasterDnsVPN" />
       <BinaryCard kind="aivpn" title="AIVPN" />
       <BinaryCard kind="openflux" title="OpenFlux" />
+      <BinaryCard kind="vkturn" title="VK TURN (iOS)" />
       <BinaryCard kind="mieru" title="mieru" />
       <BinaryCard kind="trusttunnel" title="TrustTunnel" />
       <BinaryCard kind="anytls" title="AnyTLS" />

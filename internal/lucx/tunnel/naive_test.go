@@ -27,7 +27,7 @@ func TestNameRegistry(t *testing.T) {
 	if !Olcrtc.Valid() || Olcrtc.DisplayName() != "olcRTC" {
 		t.Errorf("Olcrtc Valid/DisplayName broken: %v %q", Olcrtc.Valid(), Olcrtc.DisplayName())
 	}
-	if got := All(); len(got) != 18 || got[0] != Naive || got[1] != Olcrtc || got[2] != Qwdtt || got[3] != Csqtt || got[4] != Masterdns || got[5] != Aivpn || got[6] != Mieru || got[7] != TrustTunnel || got[8] != Anytls || got[9] != Tproxy || got[10] != Mtproxy || got[11] != Telemt || got[12] != MtprotoZig || got[13] != TproxyCaddy || got[14] != Cover || got[15] != Gateway || got[16] != Openflux || got[17] != Wgosocks {
+	if got := All(); len(got) != 19 || got[18] != Vkturn || got[0] != Naive || got[1] != Olcrtc || got[2] != Qwdtt || got[3] != Csqtt || got[4] != Masterdns || got[5] != Aivpn || got[6] != Mieru || got[7] != TrustTunnel || got[8] != Anytls || got[9] != Tproxy || got[10] != Mtproxy || got[11] != Telemt || got[12] != MtprotoZig || got[13] != TproxyCaddy || got[14] != Cover || got[15] != Gateway || got[16] != Openflux || got[17] != Wgosocks {
 		t.Errorf("All() = %v", got)
 	}
 	if got := Olcrtc.BinaryName(); !strings.HasPrefix(got, "olcrtc-") {

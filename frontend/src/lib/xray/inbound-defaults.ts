@@ -18,6 +18,7 @@ import type { CsqttInboundSettings } from '@/schemas/protocols/inbound/csqtt';
 import type { MasterdnsInboundSettings } from '@/schemas/protocols/inbound/masterdns';
 import type { AivpnInboundSettings } from '@/schemas/protocols/inbound/aivpn'; // LUCX-HOOK: AIVPN (settings type)
 import type { OpenfluxInboundSettings } from '@/schemas/protocols/inbound/openflux';
+import type { VkturnInboundSettings } from '@/schemas/protocols/inbound/vkturn'; // LUCX-HOOK
 import type { MieruInboundSettings } from '@/schemas/protocols/inbound/mieru';
 import type { TrustTunnelInboundSettings } from '@/schemas/protocols/inbound/trusttunnel';
 import type { AnytlsInboundSettings } from '@/schemas/protocols/inbound/anytls';
@@ -388,6 +389,11 @@ export function createDefaultQwdttInboundSettings(): QwdttInboundSettings {
   };
 }
 
+// LUCX-HOOK: VK TURN (iOS) — релей anton48 перед WireGuard-инбаундом.
+export function createDefaultVkturnInboundSettings(): VkturnInboundSettings {
+  return { wgInboundId: 0, subHost: '', vkHashes: '', dns: '1.1.1.1', numConnections: 30 };
+}
+
 export function createDefaultMieruInboundSettings(): MieruInboundSettings {
   return {
     portBindings: [{ port: 20100, protocol: 'TCP' }],
@@ -688,6 +694,7 @@ export type AnyInboundSettings =
   | MasterdnsInboundSettings
   | AivpnInboundSettings // LUCX-HOOK: AIVPN
   | OpenfluxInboundSettings
+  | VkturnInboundSettings
   | MieruInboundSettings
   | TrustTunnelInboundSettings
   | AnytlsInboundSettings
@@ -741,6 +748,8 @@ export function createDefaultInboundSettings(protocol: string): AnyInboundSettin
       return createDefaultAivpnInboundSettings();
     case 'openflux':
       return createDefaultOpenfluxInboundSettings();
+    case 'vkturn': // LUCX-HOOK: VK TURN (iOS)
+      return createDefaultVkturnInboundSettings();
     case 'mieru':
       return createDefaultMieruInboundSettings();
     case 'trusttunnel':

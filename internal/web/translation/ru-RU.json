@@ -921,6 +921,16 @@
         "qwdttSingleNote": "Только один qWDTT inbound на хост — второй не стартует. Общий password для всех.",
         "csqttSingleNote": "Один CSQTT inbound на хост — второй не стартует. Один пароль = одно устройство. Бинарь — Settings → Cores. Клиенты: CSQTT Android APK или iOS anton48 (режим CSQTT, не WRAP-A).",
         "openfluxNote": "OpenFlux exit (l4). Одна ссылка, один активный клиент. Новый пользователь = новый inbound (свой порт и URL канала). Direct слушает порт inbound. URL Яндекса, Mail.ru или Cups — дополнительный канал. Бинарь — Settings → Cores.",
+        "vkturnNote": "Релей для iOS-приложения vk-turn-proxy-ios (anton48, режим SRTP). Пересылает сессии VK TURN в выбранный WireGuard-инбаунд: каждый клиент этого инбаунда получает ссылку vkturnproxy:// рядом со своим WireGuard-конфигом. Порт должен быть открыт для UDP.",
+        "vkturnWgInbound": "WireGuard-инбаунд",
+        "vkturnWgInboundHint": "Локальный WireGuard-инбаунд Xray, куда релей отдаёт пакеты (127.0.0.1:<его порт>). Его клиенты — клиенты релея.",
+        "vkturnWgInboundPlaceholder": "Выберите WireGuard-инбаунд",
+        "vkturnNoWgInbound": "Сначала создайте WireGuard-инбаунд",
+        "vkturnSubHost": "Публичный адрес (для клиентов)",
+        "vkturnSubHostHint": "IP или домен, к которому подключаются клиенты, без порта. Пусто — адрес панели.",
+        "vkturnVkHashesHint": "Хеши VK-звонков через запятую для клиентов без своих хешей.",
+        "vkturnNumConnections": "TURN-соединений",
+        "vkturnNumConnectionsHint": "Параллельных TURN-аллокаций в приложении (1..50, по умолчанию 30).",
         "openfluxShareHost": "Публичный хост",
         "openfluxShareHostHint": "Адрес, куда клиент стучится по direct. Пусто = хост подписки.",
         "openfluxYandexUrl": "URL документа Яндекса",
@@ -3525,6 +3535,13 @@
       },
       "inboundMovedTitle": "Настройка — в Inbounds",
       "inboundMovedDesc": "Создавайте и редактируйте NaiveProxy, olcRTC и qWDTT в разделе Inbounds. Здесь только бинарники, логи процесса и редкие advanced-опции.",
+      "vkturn": {
+        "toasts": {
+          "uploaded": "Бинарь релея VK TURN загружен",
+          "downloaded": "Бинарь релея VK TURN скачан",
+          "deleted": "Бинарь релея VK TURN удалён"
+        }
+      },
       "openflux": {
         "toasts": {
           "uploaded": "OpenFlux binary uploaded",

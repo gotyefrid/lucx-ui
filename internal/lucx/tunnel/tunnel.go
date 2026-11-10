@@ -119,7 +119,7 @@ const (
 
 // All returns the supported INBOUND core names in display order.
 func All() []Name {
-	return []Name{Naive, Olcrtc, Qwdtt, Csqtt, Masterdns, Aivpn, Mieru, TrustTunnel, Anytls, Tproxy, Mtproxy, Telemt, MtprotoZig, TproxyCaddy, Cover, Gateway, Openflux, Wgosocks}
+	return []Name{Naive, Olcrtc, Qwdtt, Csqtt, Masterdns, Aivpn, Mieru, TrustTunnel, Anytls, Tproxy, Mtproxy, Telemt, MtprotoZig, TproxyCaddy, Cover, Gateway, Openflux, Wgosocks, Vkturn}
 }
 
 // ClientCores returns outbound-client binary names (orphan sweep + Cores UI).
@@ -130,7 +130,7 @@ func ClientCores() []Name {
 // Valid reports whether n is one of the supported core names.
 func (n Name) Valid() bool {
 	switch n {
-	case Naive, Olcrtc, Qwdtt, Csqtt, Masterdns, Aivpn, Openflux, Mieru, TrustTunnel, Anytls, Tproxy, Mtproxy, Telemt, MtprotoZig, TproxyCaddy, Cover, Gateway, Wgo, Wgosocks, NaiveClient, MieruClient, TrustTunnelClient:
+	case Naive, Olcrtc, Qwdtt, Csqtt, Masterdns, Aivpn, Openflux, Mieru, TrustTunnel, Anytls, Tproxy, Mtproxy, Telemt, MtprotoZig, TproxyCaddy, Cover, Gateway, Wgo, Wgosocks, Vkturn, NaiveClient, MieruClient, TrustTunnelClient:
 		return true
 	}
 	return false
@@ -183,6 +183,8 @@ func (n Name) DisplayName() string {
 		return "WG obfuscator"
 	case Wgosocks:
 		return "WG obfuscator SOCKS5"
+	case Vkturn:
+		return "VK TURN (iOS)"
 	default:
 		return string(n)
 	}

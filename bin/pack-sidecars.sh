@@ -229,6 +229,21 @@ if ! have "qwdtt-linux-${ARCH}"; then
     rm -rf /tmp/qwdtt
 fi
 
+# LucX: релей VK TURN (iOS) — anton48/vk-turn-proxy, ветка add-server-srtp-layer.
+if ! have "vkturn-linux-${ARCH}"; then
+    git init -q /tmp/vkturn
+    git -C /tmp/vkturn remote add origin https://github.com/anton48/vk-turn-proxy.git
+    # Пин: тег srtp-build478.
+    git -C /tmp/vkturn fetch -q --depth 1 origin f954cb04ac17f49059f6fe5630a09428ff04c242
+    git -C /tmp/vkturn checkout -q FETCH_HEAD
+    (
+        cd /tmp/vkturn
+        GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH="${ARCH}" go build -trimpath -ldflags="-s -w" -o "${DEST}/vkturn-linux-${ARCH}" ./server
+    )
+    chmod +x "${DEST}/vkturn-linux-${ARCH}"
+    rm -rf /tmp/vkturn
+fi
+
 if ! have "mieru-linux-${ARCH}" || ! have "mieru-client-linux-${ARCH}"; then
     git clone --depth 1 --branch v3.39.0 https://github.com/enfein/mieru.git /tmp/mieru
     (

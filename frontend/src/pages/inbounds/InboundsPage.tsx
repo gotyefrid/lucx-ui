@@ -369,7 +369,8 @@ export default function InboundsPage() {
         !content.trim() &&
         (projected.protocol === 'naive' ||
           projected.protocol === 'mieru' ||
-          projected.protocol === 'trusttunnel')
+          projected.protocol === 'trusttunnel' ||
+          projected.protocol === 'vkturn')
       ) {
         try {
           const msg = (await HttpUtil.get(`/panel/api/inbounds/${projected.id}/links`)) as {

@@ -3348,7 +3348,8 @@ export const SCHEMAS: Record<string, unknown> = {
           "tproxy",
           "cover",
           "gateway",
-          "wgosocks"
+          "wgosocks",
+          "vkturn"
         ],
         "example": "vless",
         "type": "string"

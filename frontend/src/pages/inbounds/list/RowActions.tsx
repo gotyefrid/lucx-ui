@@ -67,6 +67,7 @@ export function buildRowActionsMenu({
       record.protocol === 'csqtt' ||
       record.protocol === 'masterdns' ||
       record.protocol === 'openflux' ||
+      record.protocol === 'vkturn' ||
       record.protocol === 'olcrtc'
     ) {
       items.push({ key: 'export', icon: <ExportOutlined />, label: t('pages.inbounds.export') });

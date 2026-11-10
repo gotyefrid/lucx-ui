@@ -231,6 +231,13 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	openflux.POST("/upload", a.openfluxUploadBinary)
 	openflux.POST("/download", a.openfluxDownloadBinary)
 	openflux.POST("/deleteBinary", a.openfluxDeleteBinary)
+	// Релей VK TURN (iOS, anton48): статус/логи/бинарь для страницы ядер.
+	vkturn := g.Group("/vkturn")
+	vkturn.GET("/status", a.vkturnStatus)
+	vkturn.GET("/logs", a.vkturnLogs)
+	vkturn.POST("/upload", a.vkturnUploadBinary)
+	vkturn.POST("/download", a.vkturnDownloadBinary)
+	vkturn.POST("/deleteBinary", a.vkturnDeleteBinary)
 
 	// mieru is inbound-only (no legacy config/lifecycle): status, logs and
 	// binary management for the Settings → Cores page.
@@ -1393,4 +1400,51 @@ func (a *TunnelController) setClientVk(c *gin.Context) {
 		VkHashes: service.ClientVkHashes(email),
 		Members:  service.ClientTunnelStatus(email),
 	}, nil)
+}
+
+// --- VK TURN (iOS) relay -----------------------------------------------------
+
+func (a *TunnelController) vkturnStatus(c *gin.Context) {
+	jsonObj(c, a.svc.VkturnStatus(), nil)
+}
+
+func (a *TunnelController) vkturnLogs(c *gin.Context) {
+	lines := 200
+	if n := c.Query("lines"); n != "" {
+		if parsed, err := strconv.Atoi(n); err == nil && parsed > 0 {
+			lines = parsed
+		}
+	}
+	jsonObj(c, tunnel.GetManager().LogsPrefixed("vkturn-", lines), nil)
+}
+
+func (a *TunnelController) vkturnUploadBinary(c *gin.Context) {
+	if err := saveCoreUpload(c, tunnel.Vkturn.BinaryPath()); err != nil {
+		logger.Warning("tunnel: save uploaded vkturn binary failed:", err)
+		jsonMsg(c, "tunnel: vkturn upload failed", err)
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.vkturn.toasts.uploaded"), nil)
+}
+
+func (a *TunnelController) vkturnDownloadBinary(c *gin.Context) {
+	var body tunnelDownloadRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		jsonMsg(c, "tunnel: invalid vkturn download body", err)
+		return
+	}
+	if err := a.svc.DownloadVkturnBinary(body.URL, body.SHA256); err != nil {
+		jsonMsg(c, "tunnel: vkturn download failed", err)
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.vkturn.toasts.downloaded"), nil)
+}
+
+func (a *TunnelController) vkturnDeleteBinary(c *gin.Context) {
+	tunnel.GetManager().StopPrefixed("vkturn-")
+	if err := os.Remove(tunnel.Vkturn.BinaryPath()); err != nil && !os.IsNotExist(err) {
+		jsonMsg(c, "tunnel: vkturn binary delete failed", err)
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.vkturn.toasts.deleted"), nil)
 }

@@ -80,6 +80,7 @@ import {
   MasterdnsFields, // LUCX-HOOK: MasterDNSVPN
   AivpnFields, // LUCX-HOOK: AIVPN
   OpenfluxFields, // LUCX-HOOK: OpenFlux
+  VkturnFields, // LUCX-HOOK: VK TURN (iOS)
   MieruFields, // LUCX-HOOK: mieru
   TrustTunnelFields, // LUCX-HOOK: TrustTunnel
   AnytlsFields, // LUCX-HOOK: AnyTLS
@@ -1053,6 +1054,7 @@ export default function InboundFormModal({
       {protocol === Protocols.MASTERDNS && <MasterdnsFields />}
       {protocol === Protocols.AIVPN && <AivpnFields />}
       {protocol === Protocols.OPENFLUX && <OpenfluxFields />}
+      {protocol === Protocols.VKTURN && <VkturnFields />}
       {protocol === Protocols.MIERU && <MieruFields />}
       {protocol === Protocols.TRUSTTUNNEL && <TrustTunnelFields />}
       {protocol === Protocols.ANYTLS && <AnytlsFields />}

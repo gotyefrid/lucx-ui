@@ -17,6 +17,7 @@ Not packed into `x-ui-linux-amd64.tar.gz` (SourceCraft 100 MB release cap).
 | `tproxy-linux-amd64` / `mtproxy-linux-amd64` | telegramdesktop/tproxy-server `c8adb8b7` + TelegramMessenger/MTProxy `f36d8af7` — packed by `.github/workflows/release.yml` into the GitHub amd64 tarball (not stored as gz here) |
 | `nginx-linux-*` | nginx.org `1.30.5` stream+ssl_preread — built by `bin/pack-sidecars.sh` into the GitHub tarball |
 | `masks/*.json` | infosave2007/aivpn `v1.2.0` `masks.tar.gz` (arch-independent MaskProfile JSONs) — the release packs them into every panel tarball at `bin/tunnel/aivpn-masks/`; `aivpn-server` exits without at least one |
+| `vkturn-linux-amd64.gz` | anton48/vk-turn-proxy `srtp-build478` (`f954cb04`) `./server` — VK TURN SRTP relay for the iOS app (GPL-3.0) |
 
 Licenses stay with those projects. Refresh from a LucX release tarball:
 
