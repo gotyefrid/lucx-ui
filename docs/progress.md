@@ -1,5 +1,26 @@
 # LucX-UI — Прогресс
 
+## lucx.358 — fork release: per-client qWDTT/CSQTT, VK TURN (iOS) relay, sidecar state in backups (2026-11-10)
+
+First release built from the gotyefrid/lucx-ui fork (upstream lucx.357 + the changes below).
+`install.sh`, `update.sh`, `x-ui.sh` and the panel's update check now resolve releases from
+`gotyefrid/lucx-ui` (`LUCX_REPO=owner/repo` overrides the scripts), so a fork install never
+pulls an upstream build over itself.
+
+- qWDTT `perClient`: one server password per client (label = email, existing labels adopted),
+  enable/expiry/traffic/`limitIp` synced through the admin API, per-password traffic and online.
+  Vendored qwdtt carries `qwdtt-password-limit.patch` and `qwdtt-active-devices.patch`
+  (online counted per password: legacy clients without a device id share `unknown`).
+- Per-client VK call hashes for qWDTT/CSQTT/iOS (`/panel/api/tunnel/clientVk/:email`, client
+  form, Telegram bot wizard and client card).
+- `vkturn` sidecar (anton48 vk-turn-proxy, SRTP) in front of a WireGuard inbound; clients of
+  that inbound get `vkturnproxy://` links.
+- CSQTT online/traffic from the member's own counters, not process I/O.
+- Share-only sidecar clients (qWDTT/CSQTT/olcRTC/masterdns/OpenFlux/tproxy): stats follow a
+  rename, `GetClientByEmail` and `BulkSetEnable` find them, the bot lists and counts them.
+- Backups carry `bin/tunnel/*-data` (SQLite via `VACUUM INTO`); import stops the sidecars,
+  replaces the dirs and reconciles.
+
 ## lucx.357 — fix: aivpn QR/keys — the core v1.2.0 strips keys from every payload, modal pulls the key on click (2026-11-10)
 
 Hastelo: after the masks fix (lucx.356) the aivpn server starts and clients add, but the

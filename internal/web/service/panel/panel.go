@@ -56,7 +56,10 @@ type PanelReleaseNotes struct {
 }
 
 const (
-	panelUpdaterURL      = "https://raw.githubusercontent.com/AlexeyLCP/lucx-ui/main/update.sh"
+	// LUCX-HOOK: updates come from the fork that builds this panel.
+	panelRepo       = "gotyefrid/lucx-ui"
+	panelUpdaterURL = "https://raw.githubusercontent.com/" + panelRepo + "/main/update.sh"
+	// END LUCX-HOOK
 	maxPanelUpdaterBytes = 2 << 20
 	// devReleaseTag is the fixed-tag rolling pre-release the CI force-moves to the
 	// newest main commit; the dev update channel installs from it.
@@ -203,7 +206,7 @@ func fetchCompareNotes(currentTag, latestTag string) string {
 	if cur == "" || lat == "" || cur == lat {
 		return ""
 	}
-	url := fmt.Sprintf("https://api.github.com/repos/AlexeyLCP/lucx-ui/compare/%s...%s", cur, lat)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/compare/%s...%s", panelRepo, cur, lat)
 	client := (&service.SettingService{}).NewProxiedHTTPClient(10 * time.Second)
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
@@ -322,7 +325,7 @@ func filterReleasePage(releases []githubRelease, current string, perPage int) (i
 }
 
 func fetchPanelReleasesPage(page, perPage int) ([]githubRelease, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/AlexeyLCP/lucx-ui/releases?per_page=%d&page=%d", perPage, page)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases?per_page=%d&page=%d", panelRepo, perPage, page)
 	client := (&service.SettingService{}).NewProxiedHTTPClient(10 * time.Second)
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
@@ -586,9 +589,9 @@ func downloadPanelUpdater() (string, error) {
 // fetchPanelRelease fetches a release from GitHub. An empty tag resolves the
 // latest stable release; a non-empty tag (e.g. dev-latest) resolves that tag.
 func fetchPanelRelease(tag string) (*service.Release, error) {
-	url := "https://api.github.com/repos/AlexeyLCP/lucx-ui/releases/latest"
+	url := "https://api.github.com/repos/" + panelRepo + "/releases/latest"
 	if tag != "" {
-		url = "https://api.github.com/repos/AlexeyLCP/lucx-ui/releases/tags/" + tag
+		url = "https://api.github.com/repos/" + panelRepo + "/releases/tags/" + tag
 	}
 	client := (&service.SettingService{}).NewProxiedHTTPClient(10 * time.Second)
 	req, reqErr := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
