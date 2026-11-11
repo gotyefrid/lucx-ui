@@ -101,6 +101,7 @@ describe('qwdtt inbound form', () => {
   ])('subnet %s valid=%s', (value, ok) => {
     const r = QwdttSubnetSchema.safeParse(value);
     expect(r.success).toBe(ok);
-    if (!r.success) expect(r.error.issues[0].message).toBe('pages.inbounds.form.qwdttSubnetInvalid');
+    if (!r.success)
+      expect(r.error.issues[0].message).toBe('pages.inbounds.form.qwdttSubnetInvalid');
   });
 });
