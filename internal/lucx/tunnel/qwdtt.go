@@ -43,6 +43,16 @@ type QwdttConfig struct {
 	// ListenDirect is the optional direct RTP-obfs listener (empty = off).
 	ListenDirect string `json:"listenDirect"`
 
+	// WGSubnet / RawSubnet are the kernel client pools of the core (private
+	// IPv4 /16). Empty → QwdttDefaultWGSubnet / QwdttDefaultRawSubnet, so the
+	// panel never inherits the upstream 10.66 pool. Only a core built with
+	// -wg-subnet/-raw-subnet honors them; the panel probes the binary and
+	// omits the flags otherwise. Changing them on a live inbound re-addresses
+	// every client: the core migrates passwords.json and keeps a backup
+	// (passwords.before-subnets-*.json), clients must reconnect.
+	WGSubnet  string `json:"wgSubnet"`
+	RawSubnet string `json:"rawSubnet"`
+
 	// SubHost is "ip:dtlsPort" advertised to clients (empty → detect on save
 	// is left to the operator / UI placeholder).
 	SubHost string `json:"subHost"`
@@ -78,6 +88,8 @@ func DefaultQwdttConfig() QwdttConfig {
 		WGPort:           56001,
 		DNS:              "8.8.8.8",
 		ListenRaw:        "0.0.0.0:56003",
+		WGSubnet:         QwdttDefaultWGSubnet,
+		RawSubnet:        QwdttDefaultRawSubnet,
 		ClientPort:       9000,
 		Workers:          16,
 		RouteThroughXray: true,
@@ -98,6 +110,12 @@ func (c QwdttConfig) Merge() QwdttConfig {
 	}
 	if c.ListenRaw == "" {
 		c.ListenRaw = def.ListenRaw
+	}
+	if strings.TrimSpace(c.WGSubnet) == "" {
+		c.WGSubnet = def.WGSubnet
+	}
+	if strings.TrimSpace(c.RawSubnet) == "" {
+		c.RawSubnet = def.RawSubnet
 	}
 	if c.ClientPort == 0 {
 		c.ClientPort = def.ClientPort
@@ -144,6 +162,9 @@ func (c QwdttConfig) Validate() error {
 	}
 	if c.AdminPort < 0 || c.AdminPort > 65535 {
 		return errors.New("qwdtt: adminPort must be in 0..65535")
+	}
+	if err := c.ValidateSubnets(); err != nil {
+		return err
 	}
 	if c.PerClient {
 		admin := c.EffectiveAdminPort()
@@ -253,6 +274,9 @@ func (c QwdttConfig) BuildArgs() []string {
 	}
 	if dir := strings.TrimSpace(c.ListenDirect); dir != "" {
 		args = append(args, "-listen-direct", dir)
+	}
+	if QwdttSupportsSubnetFlags() {
+		args = append(args, c.SubnetArgs()...)
 	}
 	return args
 }

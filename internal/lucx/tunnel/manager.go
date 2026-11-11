@@ -82,6 +82,13 @@ type Instance struct {
 	TunName          string
 	RouteTable       int
 	RouteIfaces      []string
+
+	// QwdttSubnets carries the configured client pools (WG, Raw) of a qWDTT
+	// instance. The routed bridge strips the binary's MASQUERADE rules for
+	// them plus the legacy pools; Fingerprint includes the list so a subnet
+	// change re-runs the reconcile even when the argv is unchanged (old core
+	// without -wg-subnet/-raw-subnet support).
+	QwdttSubnets []string
 }
 
 // ManageKey returns the manager map key for this instance.
@@ -117,7 +124,8 @@ func (inst Instance) Fingerprint() string {
 			strings.Join(inst.Args, "\x00") + "\x00" +
 			extra + "\x00" +
 			inst.FingerprintExtra + "\x00" +
-			fmt.Sprintf("rtx=%v|tun=%s|tbl=%d|uid=%d", inst.RouteThroughXray, inst.TunName, inst.RouteTable, inst.RunUid),
+			fmt.Sprintf("rtx=%v|tun=%s|tbl=%d|uid=%d", inst.RouteThroughXray, inst.TunName, inst.RouteTable, inst.RunUid) +
+			"\x00subnets=" + strings.Join(inst.QwdttSubnets, ","),
 	))
 	return hex.EncodeToString(sum[:16])
 }

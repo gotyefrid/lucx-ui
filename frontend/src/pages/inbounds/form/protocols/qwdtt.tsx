@@ -15,6 +15,10 @@ export default function QwdttFields() {
   const { t } = useTranslation();
   const routeThroughXray = useWatch({ name: 'settings.routeThroughXray' }) as boolean | undefined;
   const perClient = useWatch({ name: 'settings.perClient' }) as boolean | undefined;
+  const wgSubnet = useWatch({ name: 'settings.wgSubnet' }) as string | undefined;
+  const rawSubnet = useWatch({ name: 'settings.rawSubnet' }) as string | undefined;
+  const customSubnets =
+    (!!wgSubnet && wgSubnet !== '10.68.0.0/16') || (!!rawSubnet && rawSubnet !== '10.70.0.0/16');
   const { data: outboundTags } = useOutboundTags();
   return (
     <>
@@ -104,6 +108,28 @@ export default function QwdttFields() {
       >
         <Input placeholder="" />
       </FormField>
+      <FormField
+        name={['settings', 'wgSubnet']}
+        label={t('pages.inbounds.form.qwdttWgSubnet')}
+        tooltip={t('pages.inbounds.form.qwdttWgSubnetHint')}
+      >
+        <Input placeholder="10.68.0.0/16" />
+      </FormField>
+      <FormField
+        name={['settings', 'rawSubnet']}
+        label={t('pages.inbounds.form.qwdttRawSubnet')}
+        tooltip={t('pages.inbounds.form.qwdttRawSubnetHint')}
+      >
+        <Input placeholder="10.70.0.0/16" />
+      </FormField>
+      {customSubnets && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message={t('pages.inbounds.form.qwdttSubnetWarning')}
+        />
+      )}
       <FormField name={['settings', 'clientPort']} label={t('pages.inbounds.form.qwdttClientPort')}>
         <InputNumber min={1} max={65535} style={{ width: '100%' }} />
       </FormField>

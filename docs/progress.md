@@ -1,5 +1,43 @@
 # LucX-UI — Прогресс
 
+## lucx.359 — qWDTT: configurable WG/Raw client subnets (2026-11-11)
+
+The qWDTT inbound now exposes `wgSubnet` / `rawSubnet` (private IPv4 /16,
+defaults `10.68.0.0/16` and `10.70.0.0/16`). The panel passes them as
+`-wg-subnet` / `-raw-subnet` only when the installed core's `-h` lists the
+flags (`QwdttSupportsSubnetFlags`); an older core keeps its built-in pools and
+the panel logs a warning instead of crash-looping on an unknown flag.
+
+- `internal/lucx/tunnel/qwdtt_subnet.go`: effective pools, validation, probe,
+  `SubnetArgs`, and the strip list (configured + legacy 10.66/10.68/10.70).
+  Validation rejects public/non-/16/unmasked pools, WG=Raw, CSQTT
+  `10.66.67.0/24`, AWG `10.254.0.0/16` and the AIVPN/Xray-TUN band
+  `10.200–10.253` (otherwise the /16 would swallow a /24 the panel routes).
+- Routing (`qwdtt_routing.go`): `stripQwdttMasquerade(inst.QwdttSubnets)` so a
+  custom pool loses the core's MASQUERADE before traffic enters the Xray TUN;
+  `Instance.QwdttSubnets` is part of the fingerprint, so a pool change re-runs
+  reconcile even when the core cannot honor the flags yet.
+- Core: `third_party/patches/qwdtt-subnets.patch` (upstream per-server subnet
+  commits on v1.4.4) replaces `qwdtt-subnet.patch`; `pack-sidecars.sh` and
+  `sourcecraft-release.sh` build with it (the Yandex script was still on
+  v1.4.3 without any LucX qWDTT patches). The stored amd64 sidecar was rebuilt.
+  The core migrates device addresses in `passwords.json` on start and keeps
+  `passwords.before-subnets-*.json` (0600); clients must re-import their config.
+  Nothing is rewritten on panel update — the operator changes the pools on the
+  inbound (Rule 0).
+- Frontend: fields in the qWDTT inbound form and both Zod schemas, warning
+  alert when a pool differs from the default, i18n keys in all 14 locales.
+
+Checks: `go test ./internal/lucx/tunnel/ -skip
+TestKillStrayTunnelProcessesKillsMatchingName` green (that test fails on
+pristine `main` in this sandbox: `killStrayTunnelProcesses = 0, want 1`); `go
+build ./internal/web/service/ ./internal/web/controller/ ./internal/config/`
+green; qWDTT core builds from v1.4.4 + the three patches with Go 1.27.4 and
+`-h` lists both subnet flags; frontend typecheck, lint, format:check, 111
+files / 1664 unit tests and the i18n key-parity test green.
+
+lucxVersion: lucx.359
+
 ## lucx.358 — fork release: per-client qWDTT/CSQTT, VK TURN (iOS) relay, sidecar state in backups (2026-11-10)
 
 First release built from the gotyefrid/lucx-ui fork (upstream lucx.357 + the changes below).

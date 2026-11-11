@@ -1710,9 +1710,10 @@ func (s *TunnelService) applyQwdtt(cfg tunnel.QwdttConfig) error {
 func (s *TunnelService) qwdttInstance(cfg tunnel.QwdttConfig) (tunnel.Instance, error) {
 	// ProbePort 0: DTLS is UDP; process-alive is the only reliable signal.
 	return tunnel.Instance{
-		Core:    tunnel.Qwdtt,
-		Enabled: cfg.Enabled,
-		Args:    cfg.BuildArgs(),
+		Core:         tunnel.Qwdtt,
+		Enabled:      cfg.Enabled,
+		Args:         cfg.BuildArgs(),
+		QwdttSubnets: cfg.ClientSubnets(),
 	}, nil
 }
 

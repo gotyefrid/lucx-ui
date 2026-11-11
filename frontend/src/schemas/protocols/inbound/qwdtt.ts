@@ -14,6 +14,8 @@ export const QwdttInboundSettingsSchema = z.object({
   configDir: z.string().default(''),
   listenRaw: z.string().default('0.0.0.0:56003'),
   listenDirect: z.string().default(''),
+  wgSubnet: z.string().default('10.68.0.0/16'),
+  rawSubnet: z.string().default('10.70.0.0/16'),
   subHost: z.string().default(''),
   vkHashes: z.string().default(''),
   clientPort: z.number().int().min(1).max(65535).default(9000),

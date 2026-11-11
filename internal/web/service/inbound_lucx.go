@@ -1642,6 +1642,13 @@ func (s *InboundService) normalizeLucxSidecarsOnCreate(inbound *model.Inbound) e
 			return err
 		}
 		s.normalizeQwdttSettings(inbound)
+		// Only the pools: legacy rows may carry other fields that predate
+		// stricter validation, and blocking them would break a rename/save.
+		if cfg, ok := tunnel.QwdttConfigFromInbound(inbound); ok {
+			if err := cfg.ValidateSubnets(); err != nil {
+				return err
+			}
+		}
 	}
 	if inbound.Protocol == model.Csqtt {
 		if err := s.checkVkTurnExclusive(model.Csqtt, 0, inbound.NodeID); err != nil {
@@ -1769,6 +1776,12 @@ func (s *InboundService) normalizeLucxSidecarsOnUpdate(inbound, oldInbound *mode
 			return err
 		}
 		s.normalizeQwdttSettings(inbound)
+		// See normalizeLucxSidecarsOnCreate: validate the pools only.
+		if cfg, ok := tunnel.QwdttConfigFromInbound(inbound); ok {
+			if err := cfg.ValidateSubnets(); err != nil {
+				return err
+			}
+		}
 	}
 	if inbound.Protocol == model.Csqtt {
 		if err := s.checkVkTurnExclusive(model.Csqtt, inbound.Id, inbound.NodeID); err != nil {

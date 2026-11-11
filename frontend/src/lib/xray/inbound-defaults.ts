@@ -378,6 +378,8 @@ export function createDefaultQwdttInboundSettings(): QwdttInboundSettings {
     configDir: '',
     listenRaw: '0.0.0.0:56003',
     listenDirect: '',
+    wgSubnet: '10.68.0.0/16',
+    rawSubnet: '10.70.0.0/16',
     subHost: '',
     vkHashes: '',
     clientPort: 9000,

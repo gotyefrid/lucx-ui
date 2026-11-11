@@ -11,6 +11,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
@@ -19,6 +20,10 @@ import (
 // QwdttKey is the single manager key for the panel's qWDTT inbound
 // (multi-instance is not supported: TUN + multi-port + root).
 const QwdttKey = "qwdtt"
+
+// qwdttSubnetWarnOnce keeps the "core without subnet support" warning to one
+// line per panel run; the reconcile loop rebuilds the instance every 10s.
+var qwdttSubnetWarnOnce sync.Once
 
 // QwdttConfigFromInbound maps an inbound row to QwdttConfig.
 func QwdttConfigFromInbound(ib *model.Inbound) (QwdttConfig, bool) {
@@ -86,11 +91,18 @@ func QwdttInstanceFromInbound(ib *model.Inbound) (Instance, bool) {
 		}
 	}
 	inst := Instance{
-		Core:      Qwdtt,
-		Key:       QwdttKey,
-		Enabled:   true,
-		Args:      args,
-		ProbePort: 0,
+		Core:         Qwdtt,
+		Key:          QwdttKey,
+		Enabled:      true,
+		Args:         args,
+		ProbePort:    0,
+		QwdttSubnets: cfg.ClientSubnets(),
+	}
+	if cfg.usesCustomSubnets() && !QwdttSupportsSubnetFlags() {
+		qwdttSubnetWarnOnce.Do(func() {
+			logger.Warning("qwdtt: core does not support -wg-subnet/-raw-subnet; " +
+				"the configured client pools are ignored — update the qWDTT core")
+		})
 	}
 	if cfg.RouteThroughXray {
 		inst.RouteThroughXray = true

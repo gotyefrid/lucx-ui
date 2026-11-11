@@ -195,11 +195,17 @@ git -C /tmp/olcrtc checkout -q FETCH_HEAD
 mv "/tmp/olcrtc-linux-${ARCH}" "olcrtc-linux-${ARCH}"
 rm -rf /tmp/olcrtc
 
-QWDTT_REF="fae121efc3ef57b633516601d3c0d6b1be1fde7c"
+QWDTT_REF="a296c57eaba69bb9479a24f9157856490890e47d"
 git init -q /tmp/qwdtt
 git -C /tmp/qwdtt remote add origin https://github.com/SpaceNeuroX/proxy-turn-vk-android.git
 git -C /tmp/qwdtt fetch -q --depth 1 origin "${QWDTT_REF}"
 git -C /tmp/qwdtt checkout -q FETCH_HEAD
+# Same LucX patches as pack-sidecars.sh: configurable WG/Raw subnets, one
+# password per panel client (limit 10 -> 1000) and per-password online.
+QWDTT_PATCHES="$(cd ../.. && pwd)/third_party/patches"
+git -C /tmp/qwdtt apply "${QWDTT_PATCHES}/qwdtt-subnets.patch"
+git -C /tmp/qwdtt apply "${QWDTT_PATCHES}/qwdtt-password-limit.patch"
+git -C /tmp/qwdtt apply "${QWDTT_PATCHES}/qwdtt-active-devices.patch"
 (
     cd /tmp/qwdtt
     GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH="${ARCH}" go build -trimpath -ldflags="-s -w" -o "/tmp/qwdtt-linux-${ARCH}" ./server

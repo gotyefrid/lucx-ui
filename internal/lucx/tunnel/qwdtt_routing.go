@@ -22,9 +22,11 @@ const (
 	qwdttIfaceWG  = "wdtt0"
 	qwdttIfaceRaw = "wdttraw0"
 	// Subnets claimed by the binary for client addresses (server.go).
-	qwdttSubnetWG       = "10.68.0.0/16"
+	// QwdttDefault* mirror the panel defaults; changing them in the inbound
+	// form is honored only by a core with -wg-subnet/-raw-subnet support.
+	qwdttSubnetWG       = QwdttDefaultWGSubnet
 	qwdttSubnetWGLegacy = "10.66.0.0/16"
-	qwdttSubnetRaw      = "10.70.0.0/16"
+	qwdttSubnetRaw      = QwdttDefaultRawSubnet
 
 	csqttIface      = "csqtt1"
 	csqttSubnet     = "10.66.67.0/24"
@@ -101,7 +103,7 @@ func ensureQwdttXrayRouting(inst Instance) {
 		}
 	}
 
-	stripQwdttMasquerade()
+	stripQwdttMasquerade(inst.QwdttSubnets)
 	if inst.Core == Csqtt {
 		stripMasqueradeSubnet(csqttSubnet)
 		applyCsqttFirewall(csqttXrayFirewall(tun))
@@ -223,8 +225,8 @@ func clearQwdttXrayRouting(table int, ifaces []string) {
 	_ = exec.CommandContext(context.Background(), "ip", "route", "flush", "table", ts).Run()
 }
 
-func stripQwdttMasquerade() {
-	for _, subnet := range []string{qwdttSubnetWG, qwdttSubnetWGLegacy, qwdttSubnetRaw} {
+func stripQwdttMasquerade(configured []string) {
+	for _, subnet := range qwdttMasqueradeSubnets(configured) {
 		stripMasqueradeSubnet(subnet)
 	}
 }

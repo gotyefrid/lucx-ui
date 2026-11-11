@@ -218,7 +218,9 @@ if ! have "qwdtt-linux-${ARCH}"; then
     git -C /tmp/qwdtt remote add origin https://github.com/SpaceNeuroX/proxy-turn-vk-android.git
     git -C /tmp/qwdtt fetch -q --depth 1 origin a296c57eaba69bb9479a24f9157856490890e47d
     git -C /tmp/qwdtt checkout -q FETCH_HEAD
-    git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-subnet.patch"
+    # LucX: подсети WG/Raw задаются панелью (-wg-subnet/-raw-subnet), миграция
+    # passwords.json с бэкапом. Заменяет старый qwdtt-subnet.patch (10.66→10.68).
+    git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-subnets.patch"
     # LucX: панель заводит пароль на каждого клиента (perClient) — лимит 10 мал.
     git -C /tmp/qwdtt apply "${ROOT}/third_party/patches/qwdtt-password-limit.patch"
     # LucX: онлайн пароля по его подключениям — старые клиенты делят device_id "unknown".
