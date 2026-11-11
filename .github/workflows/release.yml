@@ -297,9 +297,7 @@ jobs:
           mkdir /tmp/MTProxy
           tar -C /tmp/MTProxy --strip-components=1 -xzf /tmp/MTProxy.tar.gz
           patch -d /tmp/MTProxy -p1 < third_party/patches/mtproxy-secret-file.patch
-          # Host network: the bridge's DNS stopped resolving archive.ubuntu.com
-          # on hosted runners (lucx.359 amd64 build failed twice on apt-get).
-          docker run --rm --network host --user 0 -v /tmp/MTProxy:/src -w /src ubuntu:22.04 bash -lc \
+          docker run --rm --user 0 -v /tmp/MTProxy:/src -w /src ubuntu:22.04 bash -lc \
             'apt-get update -qq && apt-get install -y -qq --no-install-recommends gcc make libssl-dev zlib1g-dev >/dev/null && make -j"$(nproc)"'
           cp /tmp/MTProxy/objs/bin/mtproto-proxy "$DEST/mtproxy-linux-${P}"
           chmod +x "$DEST/mtproxy-linux-${P}"
