@@ -7,25 +7,11 @@
 package tunnel
 
 import (
-	"net"
+	"strings"
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 )
-
-func TestQwdttAndCsqttSubnetsDisjoint(t *testing.T) {
-	_, wg, err := net.ParseCIDR(qwdttSubnetWG)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, cs, err := net.ParseCIDR(csqttSubnet)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if wg.Contains(cs.IP) || cs.Contains(wg.IP) {
-		t.Fatalf("overlap: qWDTT %s CSQTT %s", qwdttSubnetWG, csqttSubnet)
-	}
-}
 
 func TestQwdttTunHelpers(t *testing.T) {
 	if got := QwdttTunName(35); got != "tun35" {
@@ -90,5 +76,24 @@ func TestInstanceFingerprintIncludesRoute(t *testing.T) {
 	b := Instance{Core: Qwdtt, Key: QwdttKey, Args: []string{"-listen", "x"}, RouteThroughXray: true, TunName: "tun1", RouteTable: 1901}
 	if a.Fingerprint() == b.Fingerprint() {
 		t.Fatal("fingerprint must change when routeThroughXray toggles")
+	}
+}
+
+// The binary MASQUERADEs its own subnets to eth0; a custom subnet left out of
+// the strip list would send client traffic past Xray routing.
+func TestQwdttInstanceStripsConfiguredSubnets(t *testing.T) {
+	ib := &model.Inbound{
+		Id:       35,
+		Protocol: model.Qwdtt,
+		Enable:   true,
+		Settings: `{"password":"p","wgSubnet":"192.168.77.0/24","rawSubnet":"172.20.0.0/20"}`,
+	}
+	inst, ok := QwdttInstanceFromInbound(ib)
+	if !ok || !inst.Enabled {
+		t.Fatalf("instance = %+v ok=%v", inst, ok)
+	}
+	want := []string{"192.168.77.0/24", "172.20.0.0/20", "10.68.0.0/16", "10.66.0.0/16", "10.70.0.0/16"}
+	if strings.Join(inst.MasqueradeSubnets, ",") != strings.Join(want, ",") {
+		t.Fatalf("MasqueradeSubnets = %v, want %v", inst.MasqueradeSubnets, want)
 	}
 }

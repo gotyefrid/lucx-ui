@@ -97,6 +97,7 @@ func QwdttInstanceFromInbound(ib *model.Inbound) (Instance, bool) {
 		inst.TunName = QwdttTunName(ib.Id)
 		inst.RouteTable = QwdttRouteTable(ib.Id)
 		inst.RouteIfaces = []string{qwdttIfaceWG, qwdttIfaceRaw}
+		inst.MasqueradeSubnets = qwdttMasqueradeSubnets(cfg)
 	}
 	return inst, true
 }

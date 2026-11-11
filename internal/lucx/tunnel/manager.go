@@ -82,6 +82,8 @@ type Instance struct {
 	TunName          string
 	RouteTable       int
 	RouteIfaces      []string
+	// MasqueradeSubnets: client pools whose binary MASQUERADE is stripped.
+	MasqueradeSubnets []string
 }
 
 // ManageKey returns the manager map key for this instance.

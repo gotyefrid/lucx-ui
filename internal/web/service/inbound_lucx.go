@@ -439,12 +439,15 @@ func (s *InboundService) normalizeOlcrtcSettings(inbound *model.Inbound) {
 // Port from listenAddr. subHost is required for qwdtt:// ClientURI — without
 // it the inbound saves but export/QR/sub stay empty (tester report: "inbound
 // creates but nothing to share").
-func (s *InboundService) normalizeQwdttSettings(inbound *model.Inbound) {
+func (s *InboundService) normalizeQwdttSettings(inbound *model.Inbound) error {
 	cfg, ok := tunnel.QwdttConfigFromInbound(inbound)
 	if !ok {
-		return
+		return nil
 	}
 	cfg = cfg.Merge()
+	if err := cfg.Validate(); err != nil {
+		return common.NewError(err)
+	}
 	if c2, err := cfg.EnsurePassword(); err == nil {
 		cfg = c2
 	}
@@ -458,6 +461,7 @@ func (s *InboundService) normalizeQwdttSettings(inbound *model.Inbound) {
 	if inbound.Remark == "" && cfg.Remark != "" {
 		inbound.Remark = cfg.Remark
 	}
+	return nil
 }
 
 func (s *InboundService) normalizeCsqttSettings(inbound *model.Inbound) {
@@ -1641,7 +1645,9 @@ func (s *InboundService) normalizeLucxSidecarsOnCreate(inbound *model.Inbound) e
 		if err := s.checkVkTurnExclusive(model.Qwdtt, 0, inbound.NodeID); err != nil {
 			return err
 		}
-		s.normalizeQwdttSettings(inbound)
+		if err := s.normalizeQwdttSettings(inbound); err != nil {
+			return err
+		}
 	}
 	if inbound.Protocol == model.Csqtt {
 		if err := s.checkVkTurnExclusive(model.Csqtt, 0, inbound.NodeID); err != nil {
@@ -1768,7 +1774,9 @@ func (s *InboundService) normalizeLucxSidecarsOnUpdate(inbound, oldInbound *mode
 		if err := s.checkVkTurnExclusive(model.Qwdtt, inbound.Id, inbound.NodeID); err != nil {
 			return err
 		}
-		s.normalizeQwdttSettings(inbound)
+		if err := s.normalizeQwdttSettings(inbound); err != nil {
+			return err
+		}
 	}
 	if inbound.Protocol == model.Csqtt {
 		if err := s.checkVkTurnExclusive(model.Csqtt, inbound.Id, inbound.NodeID); err != nil {

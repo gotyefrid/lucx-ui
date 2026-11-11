@@ -13,7 +13,11 @@ import type { MtprotoClient, MtprotoInboundSettings } from '@/schemas/protocols/
 import type { AwgInboundSettings } from '@/schemas/protocols/inbound/awg'; // LUCX-HOOK: AWG
 import type { NaiveInboundSettings } from '@/schemas/protocols/inbound/naive'; // LUCX-HOOK: Naive
 import type { OlcrtcInboundSettings } from '@/schemas/protocols/inbound/olcrtc';
-import type { QwdttInboundSettings } from '@/schemas/protocols/inbound/qwdtt';
+import {
+  QWDTT_DEFAULT_RAW_SUBNET,
+  QWDTT_DEFAULT_WG_SUBNET,
+  type QwdttInboundSettings,
+} from '@/schemas/protocols/inbound/qwdtt';
 import type { CsqttInboundSettings } from '@/schemas/protocols/inbound/csqtt';
 import type { MasterdnsInboundSettings } from '@/schemas/protocols/inbound/masterdns';
 import type { AivpnInboundSettings } from '@/schemas/protocols/inbound/aivpn'; // LUCX-HOOK: AIVPN (settings type)
@@ -378,6 +382,8 @@ export function createDefaultQwdttInboundSettings(): QwdttInboundSettings {
     configDir: '',
     listenRaw: '0.0.0.0:56003',
     listenDirect: '',
+    wgSubnet: QWDTT_DEFAULT_WG_SUBNET,
+    rawSubnet: QWDTT_DEFAULT_RAW_SUBNET,
     subHost: '',
     vkHashes: '',
     clientPort: 9000,

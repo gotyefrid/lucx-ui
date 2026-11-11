@@ -42,6 +42,9 @@ type QwdttConfig struct {
 	ListenRaw string `json:"listenRaw"`
 	// ListenDirect is the optional direct RTP-obfs listener (empty = off).
 	ListenDirect string `json:"listenDirect"`
+	// WGSubnet / RawSubnet are the client pools (-wg-subnet / -raw-subnet).
+	WGSubnet  string `json:"wgSubnet"`
+	RawSubnet string `json:"rawSubnet"`
 
 	// SubHost is "ip:dtlsPort" advertised to clients (empty → detect on save
 	// is left to the operator / UI placeholder).
@@ -78,6 +81,8 @@ func DefaultQwdttConfig() QwdttConfig {
 		WGPort:           56001,
 		DNS:              "8.8.8.8",
 		ListenRaw:        "0.0.0.0:56003",
+		WGSubnet:         QwdttDefaultWGSubnet,
+		RawSubnet:        QwdttDefaultRawSubnet,
 		ClientPort:       9000,
 		Workers:          16,
 		RouteThroughXray: true,
@@ -104,6 +109,12 @@ func (c QwdttConfig) Merge() QwdttConfig {
 	}
 	if c.Workers == 0 {
 		c.Workers = def.Workers
+	}
+	if c.WGSubnet = strings.TrimSpace(c.WGSubnet); c.WGSubnet == "" {
+		c.WGSubnet = def.WGSubnet
+	}
+	if c.RawSubnet = strings.TrimSpace(c.RawSubnet); c.RawSubnet == "" {
+		c.RawSubnet = def.RawSubnet
 	}
 	return c
 }
@@ -141,6 +152,9 @@ func (c QwdttConfig) Validate() error {
 	}
 	if c.Workers < 1 || c.Workers > 64 {
 		return errors.New("qwdtt: workers must be in 1..64")
+	}
+	if err := validateQwdttSubnets(c.WGSubnet, c.RawSubnet); err != nil {
+		return err
 	}
 	if c.AdminPort < 0 || c.AdminPort > 65535 {
 		return errors.New("qwdtt: adminPort must be in 0..65535")
@@ -253,6 +267,12 @@ func (c QwdttConfig) BuildArgs() []string {
 	}
 	if dir := strings.TrimSpace(c.ListenDirect); dir != "" {
 		args = append(args, "-listen-direct", dir)
+	}
+	if s := strings.TrimSpace(c.WGSubnet); s != "" {
+		args = append(args, "-wg-subnet", s)
+	}
+	if s := strings.TrimSpace(c.RawSubnet); s != "" {
+		args = append(args, "-raw-subnet", s)
 	}
 	return args
 }

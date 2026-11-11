@@ -10,6 +10,7 @@ import (
 	"context"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -21,10 +22,8 @@ import (
 const (
 	qwdttIfaceWG  = "wdtt0"
 	qwdttIfaceRaw = "wdttraw0"
-	// Subnets claimed by the binary for client addresses (server.go).
-	qwdttSubnetWG       = "10.68.0.0/16"
+	// Pre-LucX upstream WG pool, still stripped in case an old rule survives.
 	qwdttSubnetWGLegacy = "10.66.0.0/16"
-	qwdttSubnetRaw      = "10.70.0.0/16"
 
 	csqttIface      = "csqtt1"
 	csqttSubnet     = "10.66.67.0/24"
@@ -101,7 +100,9 @@ func ensureQwdttXrayRouting(inst Instance) {
 		}
 	}
 
-	stripQwdttMasquerade()
+	for _, subnet := range inst.MasqueradeSubnets {
+		stripMasqueradeSubnet(subnet)
+	}
 	if inst.Core == Csqtt {
 		stripMasqueradeSubnet(csqttSubnet)
 		applyCsqttFirewall(csqttXrayFirewall(tun))
@@ -223,10 +224,16 @@ func clearQwdttXrayRouting(table int, ifaces []string) {
 	_ = exec.CommandContext(context.Background(), "ip", "route", "flush", "table", ts).Run()
 }
 
-func stripQwdttMasquerade() {
-	for _, subnet := range []string{qwdttSubnetWG, qwdttSubnetWGLegacy, qwdttSubnetRaw} {
-		stripMasqueradeSubnet(subnet)
+// qwdttMasqueradeSubnets lists the pools whose binary-installed MASQUERADE
+// must go: the configured ones plus every default an older run may have left.
+func qwdttMasqueradeSubnets(cfg QwdttConfig) []string {
+	out := []string{}
+	for _, s := range []string{cfg.WGSubnet, cfg.RawSubnet, QwdttDefaultWGSubnet, qwdttSubnetWGLegacy, QwdttDefaultRawSubnet} {
+		if s = strings.TrimSpace(s); s != "" && !slices.Contains(out, s) {
+			out = append(out, s)
+		}
 	}
+	return out
 }
 
 func stripMasqueradeSubnet(subnet string) {

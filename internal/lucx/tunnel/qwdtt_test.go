@@ -193,3 +193,67 @@ func TestQwdttWithPeerHost(t *testing.T) {
 		t.Fatalf("ipv6 SubHost = %q", v6.SubHost)
 	}
 }
+
+func TestQwdttValidateSubnets(t *testing.T) {
+	cases := []struct {
+		name, wg, raw, wantErr string
+	}{
+		{name: "defaults", wg: QwdttDefaultWGSubnet, raw: QwdttDefaultRawSubnet},
+		{name: "custom /24 pair", wg: "192.168.77.0/24", raw: "172.20.0.0/20"},
+		{name: "not cidr", wg: "10.80.0.1", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet must be an IPv4 CIDR"},
+		{name: "ipv6", wg: QwdttDefaultWGSubnet, raw: "fd00::/64", wantErr: "rawSubnet must be an IPv4 CIDR"},
+		{name: "host bits set", wg: "10.80.5.0/16", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet must be a network address (10.80.0.0/16)"},
+		{name: "public range", wg: "8.8.0.0/16", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet must be a private range"},
+		{name: "too wide", wg: "10.0.0.0/8", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet prefix must be /16../24"},
+		{name: "too narrow", wg: QwdttDefaultWGSubnet, raw: "10.70.0.0/25", wantErr: "rawSubnet prefix must be /16../24"},
+		{name: "wg overlaps raw", wg: "10.70.0.0/24", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet 10.70.0.0/24 overlaps rawSubnet 10.70.0.0/16"},
+		{name: "overlaps csqtt", wg: "10.66.0.0/16", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet 10.66.0.0/16 overlaps CSQTT 10.66.67.0/24"},
+		{name: "overlaps panel tun band", wg: "10.253.0.0/16", raw: QwdttDefaultRawSubnet, wantErr: "wgSubnet 10.253.0.0/16 overlaps panel tunnel range 10.200.0.0-10.255.255.255"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := DefaultQwdttConfig()
+			cfg.WGSubnet, cfg.RawSubnet = tc.wg, tc.raw
+			err := cfg.Validate()
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("valid subnets rejected: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("err = %v, want containing %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestQwdttBuildArgsSubnets(t *testing.T) {
+	cfg := DefaultQwdttConfig()
+	joined := strings.Join(cfg.BuildArgs(), " ")
+	for _, want := range []string{"-wg-subnet 10.68.0.0/16", "-raw-subnet 10.70.0.0/16"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("default args missing %q: %s", want, joined)
+		}
+	}
+	cfg.WGSubnet, cfg.RawSubnet = "192.168.77.0/24", "172.20.0.0/20"
+	joined = strings.Join(cfg.BuildArgs(), " ")
+	for _, want := range []string{"-wg-subnet 192.168.77.0/24", "-raw-subnet 172.20.0.0/20"} {
+		if !strings.Contains(joined, want) {
+			t.Errorf("custom args missing %q: %s", want, joined)
+		}
+	}
+}
+
+// The form posts "" for an untouched field; Merge must restore the defaults
+// or the sidecar would get an empty -wg-subnet and refuse to start.
+func TestQwdttMergeBlankSubnets(t *testing.T) {
+	cfg := QwdttConfig{WGSubnet: "", RawSubnet: "  "}.Merge()
+	if cfg.WGSubnet != QwdttDefaultWGSubnet || cfg.RawSubnet != QwdttDefaultRawSubnet {
+		t.Fatalf("merged subnets = %q / %q", cfg.WGSubnet, cfg.RawSubnet)
+	}
+	cfg = QwdttConfig{WGSubnet: " 192.168.77.0/24 "}.Merge()
+	if cfg.WGSubnet != "192.168.77.0/24" {
+		t.Fatalf("custom subnet not trimmed: %q", cfg.WGSubnet)
+	}
+}

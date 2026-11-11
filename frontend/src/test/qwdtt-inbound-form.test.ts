@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { InboundFormSchema } from '@/schemas/forms/inbound-form';
 import { createDefaultQwdttInboundSettings } from '@/lib/xray/inbound-defaults';
 import { formValuesToWirePayload } from '@/lib/xray/inbound-form-adapter';
+import { QwdttSubnetSchema } from '@/schemas/protocols/inbound/qwdtt';
 
 function base(over: Record<string, unknown> = {}) {
   return {
@@ -79,5 +80,27 @@ describe('qwdtt inbound form', () => {
       }),
     );
     expect(r.success, JSON.stringify(r.success ? null : r.error.issues)).toBe(true);
+  });
+
+  it('sends the default client subnets so the sidecar keeps its pools', () => {
+    const wire = formValuesToWirePayload(InboundFormSchema.parse(base()));
+    const settings = JSON.parse(wire.settings);
+    expect(settings.wgSubnet).toBe('10.68.0.0/16');
+    expect(settings.rawSubnet).toBe('10.70.0.0/16');
+  });
+
+  it.each([
+    ['192.168.77.0/24', true],
+    ['172.20.0.0/20', true],
+    ['10.68.0.0', false],
+    ['10.68.5.0/16', false],
+    ['10.0.0.0/8', false],
+    ['10.70.0.0/25', false],
+    ['8.8.0.0/16', false],
+    ['10.300.0.0/16', false],
+  ])('subnet %s valid=%s', (value, ok) => {
+    const r = QwdttSubnetSchema.safeParse(value);
+    expect(r.success).toBe(ok);
+    if (!r.success) expect(r.error.issues[0].message).toBe('pages.inbounds.form.qwdttSubnetInvalid');
   });
 });

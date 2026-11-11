@@ -8,8 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { Input, InputNumber, Alert, Switch, Select } from 'antd';
 import { useWatch } from 'react-hook-form';
 
-import { FormField } from '@/components/form/rhf';
+import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import { useOutboundTags } from '@/api/queries/useOutboundTags';
+import {
+  QWDTT_DEFAULT_RAW_SUBNET,
+  QWDTT_DEFAULT_WG_SUBNET,
+  QwdttSubnetSchema,
+} from '@/schemas/protocols/inbound/qwdtt';
 
 export default function QwdttFields() {
   const { t } = useTranslation();
@@ -103,6 +108,22 @@ export default function QwdttFields() {
         label={t('pages.inbounds.form.qwdttListenDirect')}
       >
         <Input placeholder="" />
+      </FormField>
+      <FormField
+        name={['settings', 'wgSubnet']}
+        label={t('pages.inbounds.form.qwdttWgSubnet')}
+        tooltip={t('pages.inbounds.form.qwdttSubnetHint')}
+        rules={{ validate: rhfZodValidate(QwdttSubnetSchema) }}
+      >
+        <Input placeholder={QWDTT_DEFAULT_WG_SUBNET} />
+      </FormField>
+      <FormField
+        name={['settings', 'rawSubnet']}
+        label={t('pages.inbounds.form.qwdttRawSubnet')}
+        tooltip={t('pages.inbounds.form.qwdttSubnetHint')}
+        rules={{ validate: rhfZodValidate(QwdttSubnetSchema) }}
+      >
+        <Input placeholder={QWDTT_DEFAULT_RAW_SUBNET} />
       </FormField>
       <FormField name={['settings', 'clientPort']} label={t('pages.inbounds.form.qwdttClientPort')}>
         <InputNumber min={1} max={65535} style={{ width: '100%' }} />
