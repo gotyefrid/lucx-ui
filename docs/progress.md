@@ -1,5 +1,18 @@
 # LucX-UI — Прогресс
 
+## lucx.359 — qWDTT: configurable WG and raw client subnets (2026-11-11)
+
+- qWDTT inbound settings `wgSubnet` / `rawSubnet` (defaults `10.68.0.0/16` / `10.70.0.0/16`),
+  passed to the sidecar as `-wg-subnet` / `-raw-subnet` (`qwdtt-subnet.patch`). A router can now
+  run a WDTT client next to its own WDTT server without the pools colliding.
+- The server address stays on `<net>.66.1` (unchanged for the defaults); a small pool without it
+  uses its last host. Stored device IPs outside the pool are reissued on load; clients pick the
+  new address up on their next connect.
+- Saving validates the pools (private IPv4, /16–/24, disjoint from each other, CSQTT
+  `10.66.67.0/24` and the 10.200–10.255 panel tunnel band); a bad qWDTT config used to save and
+  leave the sidecar silently stopped. MASQUERADE is stripped for the configured pools.
+- Upgrading restarts qWDTT once (new argv); the default pools keep every address as is.
+
 ## lucx.358 — fork release: per-client qWDTT/CSQTT, VK TURN (iOS) relay, sidecar state in backups (2026-11-10)
 
 First release built from the gotyefrid/lucx-ui fork (upstream lucx.357 + the changes below).
