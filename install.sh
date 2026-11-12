@@ -1904,6 +1904,8 @@ _xui_service_write_paths_dropin() {
     fi
     # LUCX-HOOK: AWG confs under /etc/amnezia. Masking writes UFW rules under /etc/ufw and /etc/default/ufw.
     local awg_config_dir="/etc/amnezia"
+    # systemd skips a missing "-" path at start, leaving AWG confs read-only until restart.
+    mkdir -p -m 700 "${awg_config_dir}/amneziawg"
     local ufw_config_dir="/etc/ufw"
     local ufw_default_dir="/etc/default/ufw"
     for path in "$db_folder" "$log_folder" "$bin_folder" "$main_folder" "$awg_config_dir" "$ufw_config_dir" "$ufw_default_dir"; do
