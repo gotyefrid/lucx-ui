@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Button, Modal, Spin, Tag, Typography } from 'antd';
-import { CloudDownloadOutlined } from '@ant-design/icons';
+import { CloudDownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 
 import { HttpUtil, PromiseUtil } from '@/utils';
 import { formatPanelVersion } from '@/lib/panel-version';
 import type { PanelReleaseNote, PanelReleaseNotes, PanelUpdateStatus } from '@/generated/types';
+import type { PanelUpdateCheckState } from './usePanelUpdateInfo';
 import './PanelUpdateModal.css';
 
 type UpdateOutcome = 'success' | 'failed' | 'timeout';
@@ -28,6 +29,8 @@ interface BusyEvent {
 interface PanelUpdateModalProps {
   open: boolean;
   info: PanelUpdateInfo;
+  checkState?: PanelUpdateCheckState;
+  onCheck?: () => void;
   // Upstream dev-channel toggle. This modal keeps the release-notes feed and
   // does not render the switch; the prop stays so the v3.10.0 caller typechecks.
   devChannelEnable?: boolean;
@@ -40,7 +43,14 @@ const POLL_INITIAL_MS = 5_000;
 const POLL_DEADLINE_MS = 15 * 60_000;
 const POLL_INTERVAL_MS = 3_000;
 
-export default function PanelUpdateModal({ open, info, onClose, onBusy }: PanelUpdateModalProps) {
+export default function PanelUpdateModal({
+  open,
+  info,
+  checkState = 'ok',
+  onCheck,
+  onClose,
+  onBusy,
+}: PanelUpdateModalProps) {
   const { t } = useTranslation();
   const [modal, contextHolder] = Modal.useModal();
   const [notesExpanded, setNotesExpanded] = useState(false);
@@ -217,7 +227,17 @@ export default function PanelUpdateModal({ open, info, onClose, onBusy }: PanelU
               {formatPanelVersion(window.X_UI_CUR_VER || info.currentVersion) || '?'}
             </Tag>
           </div>
-          {info.updateAvailable ? (
+          {checkState === 'checking' ? (
+            <div className="version-list-item">
+              <span>{t('pages.index.latestPanelVersion')}</span>
+              <Spin size="small" />
+            </div>
+          ) : checkState === 'failed' ? (
+            <div className="version-list-item">
+              <span>{t('pages.index.latestPanelVersion')}</span>
+              <Tag color="red">{t('pages.index.panelUpdateCheckFailed')}</Tag>
+            </div>
+          ) : info.updateAvailable ? (
             <div className="version-list-item">
               <span>{t('pages.index.latestPanelVersion')}</span>
               <Tag color="purple">{info.latestVersion || '-'}</Tag>
@@ -290,9 +310,18 @@ export default function PanelUpdateModal({ open, info, onClose, onBusy }: PanelU
         )}
 
         <div className="actions-row">
+          {onCheck && (
+            <Button
+              loading={checkState === 'checking'}
+              onClick={onCheck}
+              icon={<ReloadOutlined aria-hidden />}
+            >
+              {t('pages.index.checkPanelUpdate')}
+            </Button>
+          )}
           <Button
             type="primary"
-            disabled={!info.updateAvailable}
+            disabled={checkState !== 'ok' || !info.updateAvailable}
             onClick={updatePanel}
             icon={<CloudDownloadOutlined aria-hidden />}
           >

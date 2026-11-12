@@ -197,6 +197,8 @@
       "currentPanelVersion": "إصدار البانل الحالي",
       "latestPanelVersion": "أحدث إصدار للبانل",
       "panelUpToDate": "البانل محدث لآخر إصدار",
+      "checkPanelUpdate": "التحقق من التحديثات",
+      "panelUpdateCheckFailed": "تعذّر التحقق من التحديثات",
       "updateChannelChanged": "تم تغيير قناة التحديث",
       "xrayStatusUnknown": "مش معروف",
       "xrayStatusRunning": "شغالة",

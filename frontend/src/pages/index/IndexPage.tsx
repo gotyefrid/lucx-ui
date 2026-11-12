@@ -30,7 +30,7 @@ import ThroughputCard from './ThroughputCard';
 import ConnectionsCard from './ConnectionsCard';
 import SystemStrip from './SystemStrip';
 import { mean, peak, useOverviewHistory } from './useOverviewHistory';
-import type { PanelUpdateInfo } from './PanelUpdateModal';
+import { usePanelUpdateInfo } from './usePanelUpdateInfo';
 const JsonEditor = lazy(() => import('@/components/form/JsonEditor'));
 const PanelUpdateModal = lazy(() => import('./PanelUpdateModal'));
 const LogModal = lazy(() => import('./LogModal'));
@@ -53,11 +53,11 @@ export default function IndexPage() {
   }, [messageApi]);
 
   const [accessLogEnable, setAccessLogEnable] = useState(false);
-  const [panelUpdateInfo, setPanelUpdateInfo] = useState<PanelUpdateInfo>({
-    currentVersion: '',
-    latestVersion: '',
-    updateAvailable: false,
-  });
+  const {
+    info: panelUpdateInfo,
+    checkState: panelUpdateCheck,
+    recheck: recheckPanelUpdate,
+  } = usePanelUpdateInfo();
 
   const basePath = window.X_UI_BASE_PATH || '';
 
@@ -85,9 +85,6 @@ export default function IndexPage() {
         }
       },
     );
-    HttpUtil.get<PanelUpdateInfo>('/panel/api/server/getPanelUpdateInfo').then((msg) => {
-      if (msg?.success && msg.obj) setPanelUpdateInfo(msg.obj);
-    });
   }, []);
 
   const displayVersion = useMemo(
@@ -306,6 +303,8 @@ export default function IndexPage() {
           <PanelUpdateModal
             open={panelUpdateOpen}
             info={panelUpdateInfo}
+            checkState={panelUpdateCheck}
+            onCheck={recheckPanelUpdate}
             onClose={() => setPanelUpdateOpen(false)}
             onBusy={setBusy}
           />

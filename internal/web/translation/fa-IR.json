@@ -197,6 +197,8 @@
       "currentPanelVersion": "نسخه فعلی پنل",
       "latestPanelVersion": "آخرین نسخه پنل",
       "panelUpToDate": "پنل به‌روز است",
+      "checkPanelUpdate": "بررسی به‌روزرسانی",
+      "panelUpdateCheckFailed": "بررسی به‌روزرسانی ناموفق بود",
       "updateChannelChanged": "کانال به‌روزرسانی تغییر کرد",
       "xrayStatusUnknown": "ناشناخته",
       "xrayStatusRunning": "در حال اجرا",

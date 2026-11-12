@@ -197,6 +197,8 @@
       "currentPanelVersion": "Versi panel saat ini",
       "latestPanelVersion": "Versi panel terbaru",
       "panelUpToDate": "Panel sudah terbaru",
+      "checkPanelUpdate": "Periksa pembaruan",
+      "panelUpdateCheckFailed": "Gagal memeriksa pembaruan",
       "updateChannelChanged": "Kanal pembaruan diubah",
       "xrayStatusUnknown": "Tidak diketahui",
       "xrayStatusRunning": "Berjalan",

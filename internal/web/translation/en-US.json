@@ -197,6 +197,8 @@
       "currentPanelVersion": "Current panel version",
       "latestPanelVersion": "Latest panel version",
       "panelUpToDate": "Panel is up to date",
+      "checkPanelUpdate": "Check for updates",
+      "panelUpdateCheckFailed": "Could not check for updates",
       "updateChannelChanged": "Update channel changed",
       "xrayStatusUnknown": "Unknown",
       "xrayStatusRunning": "Running",

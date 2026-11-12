@@ -197,6 +197,8 @@
       "currentPanelVersion": "Поточна версія панелі",
       "latestPanelVersion": "Остання версія панелі",
       "panelUpToDate": "Панель оновлено",
+      "checkPanelUpdate": "Перевірити оновлення",
+      "panelUpdateCheckFailed": "Не вдалося перевірити оновлення",
       "updateChannelChanged": "Канал оновлення змінено",
       "xrayStatusUnknown": "Невідомо",
       "xrayStatusRunning": "Запущено",

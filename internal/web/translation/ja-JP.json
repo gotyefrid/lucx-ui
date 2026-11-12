@@ -197,6 +197,8 @@
       "currentPanelVersion": "現在のパネルバージョン",
       "latestPanelVersion": "最新のパネルバージョン",
       "panelUpToDate": "パネルは最新です",
+      "checkPanelUpdate": "更新を確認",
+      "panelUpdateCheckFailed": "更新を確認できませんでした",
       "updateChannelChanged": "更新チャンネルを変更しました",
       "xrayStatusUnknown": "不明",
       "xrayStatusRunning": "実行中",

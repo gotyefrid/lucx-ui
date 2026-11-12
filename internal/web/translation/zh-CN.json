@@ -197,6 +197,8 @@
       "currentPanelVersion": "当前面板版本",
       "latestPanelVersion": "最新面板版本",
       "panelUpToDate": "面板已是最新",
+      "checkPanelUpdate": "检查更新",
+      "panelUpdateCheckFailed": "无法检查更新",
       "updateChannelChanged": "更新通道已切换",
       "xrayStatusUnknown": "未知",
       "xrayStatusRunning": "运行中",

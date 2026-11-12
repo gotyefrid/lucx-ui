@@ -197,6 +197,8 @@
       "currentPanelVersion": "Mevcut panel sürümü",
       "latestPanelVersion": "Panelin en son sürümü",
       "panelUpToDate": "Panel güncel",
+      "checkPanelUpdate": "Güncellemeleri denetle",
+      "panelUpdateCheckFailed": "Güncellemeler denetlenemedi",
       "updateChannelChanged": "Güncelleme kanalı değiştirildi",
       "xrayStatusUnknown": "Bilinmiyor",
       "xrayStatusRunning": "Çalışıyor",

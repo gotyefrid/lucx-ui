@@ -197,6 +197,8 @@
       "currentPanelVersion": "Versão atual do painel",
       "latestPanelVersion": "Última versão do painel",
       "panelUpToDate": "O painel está atualizado",
+      "checkPanelUpdate": "Verificar atualizações",
+      "panelUpdateCheckFailed": "Não foi possível verificar atualizações",
       "updateChannelChanged": "Canal de atualização alterado",
       "xrayStatusUnknown": "Desconhecido",
       "xrayStatusRunning": "Em execução",

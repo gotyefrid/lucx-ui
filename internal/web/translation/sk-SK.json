@@ -197,6 +197,8 @@
       "currentPanelVersion": "Aktuálna verzia panelu",
       "latestPanelVersion": "Najnovšia verzia panelu",
       "panelUpToDate": "Panel je aktuálny",
+      "checkPanelUpdate": "Skontrolovať aktualizácie",
+      "panelUpdateCheckFailed": "Aktualizácie sa nepodarilo skontrolovať",
       "updateChannelChanged": "Zdroj aktualizácií bol zmenený",
       "xrayStatusUnknown": "Neznámy",
       "xrayStatusRunning": "Beží",

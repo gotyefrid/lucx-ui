@@ -197,6 +197,8 @@
       "currentPanelVersion": "Phiên bản panel hiện tại",
       "latestPanelVersion": "Phiên bản panel mới nhất",
       "panelUpToDate": "Panel đã được cập nhật",
+      "checkPanelUpdate": "Kiểm tra cập nhật",
+      "panelUpdateCheckFailed": "Không thể kiểm tra cập nhật",
       "updateChannelChanged": "Đã đổi kênh cập nhật",
       "xrayStatusUnknown": "Không xác định",
       "xrayStatusRunning": "Đang chạy",
