@@ -451,7 +451,7 @@ if [[ $FORCE_REBUILD -eq 0 ]]; then
     # last build predates the version.h sed below keep the frozen upstream
     # stamp (live: marker 4569c4c with an 0812 .ko) and would skip forever.
     if [[ $AWG_NEED_MODULE -eq 0 ]]; then
-        KO=$(find "/lib/modules/$(uname -r)/updates/dkms" -name 'amneziawg.ko.*' 2>/dev/null | head -1)
+        KO=$(find "/lib/modules/$(uname -r)/updates/dkms" -name 'amneziawg.ko*' 2>/dev/null | head -1)
         STAMP=$(modinfo -F version "$KO" 2>/dev/null | head -1)
         if [[ -n "$KO" && "$STAMP" != "${AWG_KMOD_TAG#v}" ]]; then
             echo -e "${YELLOW}Артефакт /lib/modules помечен '${STAMP:-?}' вместо ${AWG_KMOD_TAG#v} — пересборка.${NC}"
@@ -759,7 +759,7 @@ if [[ $AWG_NEED_MODULE -eq 1 ]]; then
     # "specify --force" hint mis-parses --force as a kernel name.
     install_built_ko() { # $1=kernel — put the freshly built .ko into /lib/modules
         local K=$1 src dir dst
-        src=$(find "/var/lib/dkms/amneziawg/${MOD_VER}/${K}/x86_64/module" -name 'amneziawg.ko.*' 2>/dev/null | head -1)
+        src=$(find "/var/lib/dkms/amneziawg/${MOD_VER}/${K}/x86_64/module" -name 'amneziawg.ko*' 2>/dev/null | head -1)
         [[ -n "$src" ]] || return 0
         dir="/lib/modules/${K}/updates/dkms"
         dst="${dir}/$(basename "$src")"
@@ -783,7 +783,7 @@ if [[ $AWG_NEED_MODULE -eq 1 ]]; then
     done
     # lucx.343: the artifact on disk must carry the tag stamp — it is what the
     # next boot loads and what the Go side reads from sysfs (moduleVersionAtLeast).
-    KO=$(find "/lib/modules/${BUILD_K}/updates/dkms" -name 'amneziawg.ko.*' 2>/dev/null | head -1)
+    KO=$(find "/lib/modules/${BUILD_K}/updates/dkms" -name 'amneziawg.ko*' 2>/dev/null | head -1)
     STAMP=$(modinfo -F version "$KO" 2>/dev/null | head -1)
     if [[ -z "$KO" || "$STAMP" != "${AWG_KMOD_TAG#v}" ]]; then
         echo -e "${RED}/lib/modules/${BUILD_K} помечен '${STAMP:-нет}', ожидался ${AWG_KMOD_TAG#v} — после ребута вернётся старая версия.${NC}"
