@@ -1436,6 +1436,7 @@ export default function InboundFormModal({
                       Protocols.TPROXY,
                       Protocols.COVER,
                       Protocols.GATEWAY,
+                      Protocols.VKTURN,
                     ] as string[]
                   ).includes(protocol) || isFallbackHost
                     ? [

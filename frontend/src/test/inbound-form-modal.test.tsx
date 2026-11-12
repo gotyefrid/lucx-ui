@@ -614,6 +614,42 @@ describe('InboundFormModal', () => {
     expect(JSON.parse(payload.settings)).not.toHaveProperty('clients');
   });
 
+  it('lets a VK TURN inbound pick its WireGuard inbound on the Protocol tab', async () => {
+    renderWithProviders(
+      <InboundFormModal
+        open
+        mode="edit"
+        dbInbound={
+          new DBInbound({
+            id: 4,
+            port: 56100,
+            listen: '',
+            protocol: 'vkturn',
+            remark: 'VK TURN iOS',
+            enable: true,
+            settings: {
+              wgInboundId: 0,
+              subHost: '',
+              vkHashes: '',
+              dns: '1.1.1.1',
+              numConnections: 30,
+            },
+            streamSettings: {},
+            sniffing: { enabled: false },
+            nodeId: null,
+          })
+        }
+        dbInbounds={[]}
+        availableNodes={[]}
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Protocol' }));
+    expect(await screen.findByText('WireGuard inbound')).toBeTruthy();
+  });
+
   it('offers the enable switch when adding an inbound but not when editing one', () => {
     renderModal();
     expect(document.getElementById('inbound-enable')).not.toBeNull();
