@@ -25,6 +25,7 @@ import {
   dropEmptyFinalMask,
   normalizeStreamSettingsForWire,
 } from '@/lib/xray/stream-wire-normalize';
+import { createDefaultQwdttInboundSettings } from '@/lib/xray/inbound-defaults';
 import { canEnableSniffing } from '@/lib/xray/protocol-capabilities';
 import { tlsCertUsesFiles } from '@/schemas/protocols/security/tls';
 import { SockoptStreamSettingsSchema } from '@/schemas/protocols/stream/sockopt';
@@ -180,7 +181,9 @@ export function rawInboundToFormValues(row: RawInboundRow): InboundFormValues {
   const settings = (
     protocol === 'tuic'
       ? { clients: rawSettings.clients, server: resolveTuicServerSettings(rawSettings) }
-      : rawSettings
+      : protocol === 'qwdtt'
+        ? { ...createDefaultQwdttInboundSettings(), ...rawSettings }
+        : rawSettings
   ) as InboundSettings['settings'];
   const rawStream = coerceJsonObject(row.streamSettings);
   const streamSettings =

@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { InboundFormSchema } from '@/schemas/forms/inbound-form';
 import { createDefaultQwdttInboundSettings } from '@/lib/xray/inbound-defaults';
-import { formValuesToWirePayload } from '@/lib/xray/inbound-form-adapter';
+import { formValuesToWirePayload, rawInboundToFormValues } from '@/lib/xray/inbound-form-adapter';
 import { QwdttSubnetSchema } from '@/schemas/protocols/inbound/qwdtt';
 
 function base(over: Record<string, unknown> = {}) {
@@ -103,5 +103,22 @@ describe('qwdtt inbound form', () => {
     expect(r.success).toBe(ok);
     if (!r.success)
       expect(r.error.issues[0].message).toBe('pages.inbounds.form.qwdttSubnetInvalid');
+  });
+
+  it('fills subnets missing from a pre-lucx.359 row so editing it passes validation', () => {
+    const legacy = { listenAddr: '0.0.0.0:56000', password: 'p', subHost: '1.2.3.4:56000' };
+    const row = { id: 1, protocol: 'qwdtt', port: 56000, settings: JSON.stringify(legacy) };
+    const settings = rawInboundToFormValues(row).settings as Record<string, unknown>;
+    expect(QwdttSubnetSchema.safeParse(settings.wgSubnet).success).toBe(true);
+    expect(QwdttSubnetSchema.safeParse(settings.rawSubnet).success).toBe(true);
+    expect(settings.subHost).toBe('1.2.3.4:56000');
+  });
+
+  it('keeps a stored custom subnet when loading the row', () => {
+    const stored = { wgSubnet: '10.90.0.0/16', rawSubnet: '10.91.0.0/16' };
+    const row = { id: 1, protocol: 'qwdtt', port: 56000, settings: JSON.stringify(stored) };
+    const settings = rawInboundToFormValues(row).settings as Record<string, unknown>;
+    expect(settings.wgSubnet).toBe('10.90.0.0/16');
+    expect(settings.rawSubnet).toBe('10.91.0.0/16');
   });
 });
