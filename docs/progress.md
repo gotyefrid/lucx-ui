@@ -1,5 +1,17 @@
 # LucX-UI — Прогресс
 
+## lucx.361 — VK TURN WireGuard picker, AWG on Ubuntu 22.04, AWG folder at install (2026-11-13)
+
+- VK TURN inbounds get the Protocol tab back: `Protocols.VKTURN` was missing from the tab list in
+  `InboundFormModal.tsx`, so `wgInboundId` (the WireGuard inbound the relay feeds) could only be
+  set through the advanced JSON template.
+- `install-awg-module.sh` looked for `amneziawg.ko.*` only. DKMS on Ubuntu 22.04 installs an
+  uncompressed `amneziawg.ko`, so the stamp check reported "помечен 'нет'" and exited before
+  building `awg` / `awg-quick`; AWG inbounds then never started. The glob is now `amneziawg.ko*`.
+- `install.sh` / `update.sh` create `/etc/amnezia/amneziawg` before writing the sandbox drop-in.
+  systemd drops a missing `-` path from `ReadWritePaths` at start, so the first AWG inbound on a
+  fresh host failed with "read-only file system" until `systemctl restart x-ui`.
+
 ## lucx.360 — panel update check button, qWDTT edit fix (2026-11-12)
 
 - The panel update dialog has a "Check for updates" button: it asks GitHub again without a page
