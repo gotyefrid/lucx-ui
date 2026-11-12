@@ -1,5 +1,13 @@
 # LucX-UI — Прогресс
 
+## lucx.360 — panel update check button, qWDTT edit fix (2026-11-12)
+
+- The panel update dialog has a "Check for updates" button: it asks GitHub again without a page
+  reload. A failed check (GitHub unreachable) now says so instead of "Panel is up to date", and
+  the update button stays disabled.
+- qWDTT inbounds created before lucx.359 can be edited again: the form fills the missing
+  `wgSubnet` / `rawSubnet` with the defaults the sidecar already used.
+
 ## lucx.359 — qWDTT: configurable WG and raw client subnets (2026-11-11)
 
 - qWDTT inbound settings `wgSubnet` / `rawSubnet` (defaults `10.68.0.0/16` / `10.70.0.0/16`),
