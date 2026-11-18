@@ -241,9 +241,7 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 		if server.ActiveSessions > 0 && server.Active {
 			online = append(online, client.Email)
 		}
-		row := &model.CsqttMember{InboundId: inbound.Id, ClientEmail: client.Email, Password: server.Password, Link: server.Link,
-			UpBytes: server.Up, DownBytes: server.Down}
-		if err := database.GetDB().Where("inbound_id = ? AND client_email = ?", inbound.Id, client.Email).Assign(row).FirstOrCreate(row).Error; err != nil {
+		if err := s.saveMember(inbound.Id, client.Email, member, server); err != nil {
 			return err
 		}
 	}
@@ -317,6 +315,29 @@ func (s *CsqttMemberService) refreshLinks(ctx context.Context, api *csqttMemberA
 		}
 	}
 	return nil
+}
+
+// saveMember stores the member and the server counters just read, so the next
+// sync credits only the bytes since this one. Updates goes through a map:
+// Assign(row).FirstOrCreate(row) overwrote row with the stored values before
+// the update (counters never advanced, each sync re-credited the full total),
+// and a struct update would skip counters that reset to zero.
+func (s *CsqttMemberService) saveMember(inboundID int, email string, member model.CsqttMember, server csqttMemberServerClient) error {
+	db := database.GetDB()
+	if member.Id != 0 {
+		if member.Password == server.Password && member.Link == server.Link &&
+			member.UpBytes == server.Up && member.DownBytes == server.Down {
+			return nil
+		}
+		return db.Model(&model.CsqttMember{}).Where("id = ?", member.Id).Updates(map[string]any{
+			"password":   server.Password,
+			"link":       server.Link,
+			"up_bytes":   server.Up,
+			"down_bytes": server.Down,
+		}).Error
+	}
+	return db.Create(&model.CsqttMember{InboundId: inboundID, ClientEmail: email, Password: server.Password,
+		Link: server.Link, UpBytes: server.Up, DownBytes: server.Down}).Error
 }
 
 func (s *CsqttMemberService) managedMember(inboundID int, email string) (model.CsqttMember, bool) {

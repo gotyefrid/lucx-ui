@@ -1,5 +1,14 @@
 # LucX-UI — Прогресс
 
+## lucx.362 — CSQTT client traffic counted many times over (2026-11-18)
+
+- `CsqttMemberService.syncInbound` saved the member row with `Assign(row).FirstOrCreate(row)`.
+  GORM loaded the stored row into `row` before the update, so `up_bytes` / `down_bytes` never
+  moved past 0 and every 30 s sync credited the client's whole counter since CSQTT start again
+  (~120× per hour; the figure kept growing after the client disconnected). The row is now written
+  by `saveMember` through an explicit `Updates(map...)`, which also stores counters reset to 0.
+  Traffic already credited stays; reset the affected clients' traffic once after updating.
+
 ## lucx.361 — VK TURN WireGuard picker, AWG on Ubuntu 22.04, AWG folder at install (2026-11-13)
 
 - VK TURN inbounds get the Protocol tab back: `Protocols.VKTURN` was missing from the tab list in
