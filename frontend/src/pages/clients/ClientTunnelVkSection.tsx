@@ -17,6 +17,7 @@ interface TunnelMemberStatus {
   protocol: string;
   ready: boolean;
   error?: string;
+  password?: string;
 }
 
 interface ClientVkResponse {
@@ -146,6 +147,16 @@ export default function ClientTunnelVkSection({ ref, open, email, inbounds, inbo
               {': '}
               {statusText(m, t)}
               {m.error ? ` — ${m.error}` : ''}
+              {m.password ? (
+                <>
+                  {' · '}
+                  {t('password')}
+                  {': '}
+                  <Typography.Text code copyable>
+                    {m.password}
+                  </Typography.Text>
+                </>
+              ) : null}
             </Typography.Text>
           ))}
         </div>

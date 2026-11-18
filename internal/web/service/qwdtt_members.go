@@ -422,6 +422,8 @@ type TunnelMemberStatus struct {
 	Protocol  string `json:"protocol"`
 	Ready     bool   `json:"ready"`
 	Error     string `json:"error,omitempty"`
+	// LUCX-HOOK: личный пароль клиента на сервере туннеля (только просмотр).
+	Password string `json:"password,omitempty"`
 }
 
 // ClientTunnelStatus собирает состояние qWDTT/CSQTT-доступов клиента.
@@ -462,12 +464,16 @@ func ClientTunnelStatus(email string) []TunnelMemberStatus {
 			if database.GetDB().Where("inbound_id = ? AND client_email = ?", ib.Id, email).First(&row).Error == nil {
 				st.Ready = row.Password != ""
 				st.Error = row.LastError
+				st.Password = row.Password
 			} else {
 				st.Error = "pending sync"
 			}
 		case model.Csqtt:
 			if _, ok := GetCsqttMemberService().Link(ib.Id, email); ok {
 				st.Ready = true
+				if member, found := GetCsqttMemberService().managedMember(ib.Id, email); found {
+					st.Password = member.Password
+				}
 			} else {
 				st.Error = "pending sync"
 			}

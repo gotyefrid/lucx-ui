@@ -1,5 +1,12 @@
 # LucX-UI — Прогресс
 
+## lucx.363 — qWDTT/CSQTT client password shown in the client form (2026-11-18)
+
+- `ClientTunnelStatus` (`GET /panel/api/tunnel/clientVk/:email`) now returns the client's own
+  password on each qWDTT/CSQTT inbound (from `qwdtt_members` / `csqtt_members`). The client form
+  shows it next to the member status, in full, with a copy button. View only: nothing is changed
+  on the tunnel servers.
+
 ## lucx.362 — CSQTT client traffic counted many times over (2026-11-18)
 
 - `CsqttMemberService.syncInbound` saved the member row with `Assign(row).FirstOrCreate(row)`.
