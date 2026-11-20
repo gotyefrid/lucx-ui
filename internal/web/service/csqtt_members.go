@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -29,6 +30,9 @@ import (
 )
 
 const csqttMemberWebPort = 46002
+
+// errCsqttVkTokenMissing — CSQTT отказал в vk_token, т.к. в нём не задан VK access token.
+var errCsqttVkTokenMissing = errors.New("CSQTT: VK access token is not configured")
 
 type csqttMemberServerClient struct {
 	Password string `json:"password"`
@@ -156,7 +160,7 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 	// keep whatever an operator chose for them in the CSQTT panel.
 	inboundHashes, vkToken := cfg.MemberVkHashes(), cfg.MemberVkToken()
 	var regroup []string
-	var vkErr error
+	var vkErr, createErr error
 	var traffic []*xray.ClientTraffic
 	var online []string
 	linksStale := false
@@ -187,11 +191,20 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 				VkToken: clientToken,
 				GroupID: groupID,
 			})
-			if err != nil {
-				return err
+			if err == nil && server.Password == "" {
+				err = fmt.Errorf("CSQTT returned an empty member password")
 			}
-			if server.Password == "" {
-				return fmt.Errorf("CSQTT returned an empty member password for %q", client.Email)
+			if err != nil {
+				// Ошибка одного клиента не должна останавливать синхронизацию
+				// остальных (их трафик, онлайн и VK-настройки).
+				if clientToken && errors.Is(err, errCsqttVkTokenMissing) {
+					err = fmt.Errorf("%w: включён «VK-токен в ссылке», но в CSQTT не задан VK access token", err)
+				}
+				logger.Warningf("csqtt members: client %q create failed: %v", client.Email, err)
+				if createErr == nil {
+					createErr = fmt.Errorf("client %q: %w", client.Email, err)
+				}
+				continue
 			}
 			managed = true
 		}
@@ -286,6 +299,9 @@ func (s *CsqttMemberService) syncInbound(ctx context.Context, inbound *model.Inb
 		if err := database.GetDB().Delete(&model.CsqttMember{}, member.Id).Error; err != nil {
 			return err
 		}
+	}
+	if createErr != nil {
+		return createErr
 	}
 	return vkErr
 }
@@ -406,7 +422,16 @@ func (a *csqttMemberAPI) do(ctx context.Context, method, path string, in, out an
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("CSQTT API %s %s returned HTTP %d", method, path, resp.StatusCode)
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		msg := strings.TrimSpace(string(raw))
+		err := fmt.Errorf("CSQTT API %s %s returned HTTP %d", method, path, resp.StatusCode)
+		if msg != "" {
+			err = fmt.Errorf("%w: %s", err, msg)
+		}
+		if strings.Contains(msg, "configure a VK token first") {
+			return fmt.Errorf("%w (%w)", errCsqttVkTokenMissing, err)
+		}
+		return err
 	}
 	if out != nil {
 		return json.NewDecoder(resp.Body).Decode(out)

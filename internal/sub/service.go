@@ -1023,10 +1023,11 @@ func (s *SubService) GetLink(inbound *model.Inbound, email string) string {
 	case "qwdtt": // LUCX-HOOK: qWDTT URI — общий пароль или пароль клиента (perClient)
 		return s.genQwdttLink(inbound, email)
 	case "csqtt": // LUCX-HOOK: single-credential CSQTT URI (ignore email)
+		// Клиенту — только его личная ссылка. Общий пароль владельца клиентам
+		// не раздаём: пока участник не создан на CSQTT, ссылки нет (как в qWDTT).
 		if email != "" {
-			if link, ok := service.GetCsqttMemberService().Link(inbound.Id, email); ok {
-				return link
-			}
+			link, _ := service.GetCsqttMemberService().Link(inbound.Id, email)
+			return link
 		}
 		return s.genCsqttLink(inbound)
 	case "masterdns": // LUCX-HOOK: MasterDNSVPN client config wrapper

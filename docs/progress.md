@@ -1,5 +1,15 @@
 # LucX-UI — Прогресс
 
+## lucx.364 — CSQTT: no shared-password fallback, per-client create errors (2026-11-20)
+
+- A CSQTT client without a member row (`csqtt_members`) got the owner's shared-password link in
+  the panel and subscription. Now a client only gets its own member link; until the member exists
+  on CSQTT there is no link (same as qWDTT perClient). The inbound-level link is unchanged.
+- `syncInbound` aborted on the first failed `POST /api/clients`, so traffic/online/VK of the
+  remaining clients stopped updating. A failed create is now logged per client and the sync goes on.
+- CSQTT API errors include the response body; `configure a VK token first` (inbound "VK token in
+  link" on, no VK access token in CSQTT) is reported with a clear message.
+
 ## lucx.363 — qWDTT/CSQTT client password shown in the client form (2026-11-18)
 
 - `ClientTunnelStatus` (`GET /panel/api/tunnel/clientVk/:email`) now returns the client's own

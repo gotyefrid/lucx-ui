@@ -9,6 +9,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -160,6 +161,22 @@ func TestCsqttMemberAPISendsVkTokenAndGroup(t *testing.T) {
 	}
 	if err := api.setGroup(ctx, []string{"p"}, "g-2"); err != nil || regroup.GroupID != "g-2" || len(regroup.Passwords) != 1 {
 		t.Fatalf("setGroup request = %+v, err=%v", regroup, err)
+	}
+}
+
+func TestCsqttMemberAPIDetectsMissingVkToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "configure a VK token first", http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	api := &csqttMemberAPI{base: server.URL, key: "k", client: server.Client()}
+	_, err := api.create(context.Background(), csqttMemberClientRequest{Name: "bob", VkToken: true})
+	if !errors.Is(err, errCsqttVkTokenMissing) {
+		t.Fatalf("err = %v, want errCsqttVkTokenMissing", err)
+	}
+	if !strings.Contains(err.Error(), "HTTP 400") {
+		t.Fatalf("err lost the HTTP status: %v", err)
 	}
 }
 
